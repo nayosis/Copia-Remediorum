@@ -45,7 +45,7 @@ describe("connexion", () => {
 
   test("protection CSRF : écriture sans l'en-tête X-App refusée", async () => {
     const { cookie } = await s.connexion(SUPER.email, SUPER.motDePasse);
-    const r = await s.requete("/api/rpc/creerNote", { corps: { args: [{ titre: "X" }] }, cookie, csrf: false });
+    const r = await s.requete("/api/rpc/creerPersonne", { corps: { args: [{ prenom: "X" }] }, cookie, csrf: false });
     expect(r.status).toBe(403);
   });
 });
@@ -68,9 +68,9 @@ describe("liens et comptes", () => {
   test("lecture : lit tout, télécharge les fichiers, mais n'écrit rien", async () => {
     const ecrivain = await s.compte("ecrivain-lecture@famille.fr", "ecriture");
     const lecteur = await s.compte("lecteur@famille.fr", "lecture");
-    expect((await s.rpc("listeNotes", [], lecteur.cookie)).status).toBe(200);
-    expect((await s.rpc("accueil", [], lecteur.cookie)).status).toBe(200);
-    expect((await s.rpc("creerNote", [{ titre: "Interdite" }], lecteur.cookie)).status).toBe(403);
+    expect((await s.rpc("listePersonnes", [], lecteur.cookie)).status).toBe(200);
+    expect((await s.rpc("listeTraitements", [], lecteur.cookie)).status).toBe(200);
+    expect((await s.rpc("creerPersonne", [{ prenom: "Interdite" }], lecteur.cookie)).status).toBe(403);
     expect((await s.requete("/api/auth/moi", { cookie: lecteur.cookie })).status).toBe(200);
     const pdf = await (await envoyer(ecrivain.cookie, new File([new Uint8Array([37, 80, 68, 70])], "ticket.pdf", { type: "application/pdf" }))).json();
     expect((await s.requete(`/api/fichiers/${pdf.fichier}`, { cookie: lecteur.cookie })).status).toBe(200);
@@ -97,10 +97,10 @@ describe("liens et comptes", () => {
 
   test("écriture : lit, écrit et envoie des fichiers, mais ne gère pas les comptes", async () => {
     const ecrivain = await s.compte("ecrivain@famille.fr", "ecriture");
-    expect((await s.rpc("creerNote", [{ titre: "Permise" }], ecrivain.cookie)).status).toBe(200);
-    expect((await s.rpc("listeNotes", [], ecrivain.cookie)).status).toBe(200);
+    expect((await s.rpc("creerPersonne", [{ prenom: "Permise" }], ecrivain.cookie)).status).toBe(200);
+    expect((await s.rpc("listePersonnes", [], ecrivain.cookie)).status).toBe(200);
     expect((await s.requete("/api/comptes", { cookie: ecrivain.cookie })).status).toBe(403);
-    expect((await s.rpc("listeNotes", [])).status).toBe(401);
+    expect((await s.rpc("listePersonnes", [])).status).toBe(401);
 
     const pdf = await envoyer(ecrivain.cookie, new File([new Uint8Array([37, 80, 68, 70])], "facture.pdf", { type: "application/pdf" }));
     expect(pdf.status).toBe(200);

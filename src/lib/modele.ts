@@ -1,29 +1,40 @@
 /*
- * Ce que l'interface du socle (journal, historique) doit savoir du modèle de l'application :
- * SEUL fichier de l'interface du socle à adapter quand on ajoute des fonctions ou des champs.
- * Pendant de serveur/modele.ts. Exemple fourni : les notes.
+ * Ce que l'interface du socle (journal, historique) doit savoir du modèle de l'application.
+ * Pendant de serveur/modele.ts.
  */
+import { posologieLisible, type Posologie } from "./posologie";
+import { quantiteLisible } from "./quantites";
 
 /** Libellés lisibles des fonctions d'écriture (journal) ; les autres sont affichées telles quelles. */
 export const LIBELLES_FONCTIONS: Record<string, string> = {
-  creerNote: "Nouvelle note",
-  majNote: "Note modifiée",
-  archiverNote: "Note archivée / désarchivée",
-  ajouterPieces: "Pièce jointe ajoutée",
-  retirerPiece: "Pièce jointe retirée",
+  creerPersonne: "Nouvelle personne",
+  majPersonne: "Personne modifiée",
+  archiverPersonne: "Personne archivée / désarchivée",
+  creerMedicament: "Nouveau médicament",
+  majMedicament: "Médicament modifié",
+  archiverMedicament: "Médicament archivé / désarchivé",
+  majParametres: "Paramètres modifiés",
+  creerTraitement: "Nouveau traitement",
+  majTraitement: "Traitement modifié",
+  supprimerTraitement: "Traitement supprimé",
 };
 
 /** Libellés des champs dans les écarts avant / après du journal. */
 export const LIBELLES_CHAMPS: Record<string, string> = {
-  titre: "Titre",
-  texte: "Texte",
+  prenom: "Prénom",
+  ordre: "Ordre",
   archivee: "Archivée",
-  archive: "Retirée",
-  pieces_jointes: "Pièces jointes",
+  archive: "Archivé",
   nom: "Nom",
-  fichier: "Fichier",
-  mime: "Type",
-  taille: "Taille",
+  unite: "Unité",
+  seuil_alerte: "Seuil d'alerte",
+  note: "Note",
+  personne: "Personne",
+  medicament: "Médicament",
+  posologie: "Posologie",
+  debut: "Début",
+  fin: "Fin",
+  delai_alerte: "Délai d'alerte (jours)",
 };
 
 /** Colonnes techniques, jamais montrées dans un écart (les colonnes de liens `*_id` sont ajoutées d'office). */
@@ -36,4 +47,17 @@ export const CHAMPS_BOOLEENS = new Set(["archive", "archivee"]);
 export const CHAMPS_MONTANTS = new Set<string>([]);
 
 /** Listes de fichiers rattachés (affichées par leurs noms, sans les retirés). */
-export const CHAMPS_FICHIERS = new Set(["pieces_jointes"]);
+export const CHAMPS_FICHIERS = new Set<string>([]);
+
+/** Champs propres à l'application, affichés autrement que tels quels (null : affichage par défaut). */
+export function lisibleMetier(cle: string, v: unknown): string | null {
+  if ((cle === "seuil_alerte" || cle === "quantite") && typeof v === "number") return quantiteLisible(v);
+  if (cle === "posologie") {
+    try {
+      return posologieLisible(typeof v === "string" ? (JSON.parse(v) as Posologie) : null);
+    } catch {
+      return String(v);
+    }
+  }
+  return null;
+}

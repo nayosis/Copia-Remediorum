@@ -38,4 +38,4 @@ bun scripts/renommer.ts "Nom" compte/depot "Description"   # une fois, dans une 
 
 ## État
 
-Cadrage en cours (`docs/conception.md`). Le module d'exemple « notes » du modèle est encore en place : il sera remplacé à l'étape 2.
+Étape 3 du plan de la V1 (`docs/conception.md`) : stocks et pointages. Étape 2 (référentiel) faite.

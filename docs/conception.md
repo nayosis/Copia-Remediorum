@@ -98,7 +98,7 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 ## Plan de la V1
 
 1. Socle (fait) : dépôt créé depuis le modèle Fundamentum, renommé, couleur et logo.
-2. Référentiel : personnes, médicaments (unité, seuil d'alerte), traitements et posologies, paramètres (délai
+2. Référentiel (fait) : personnes, médicaments (unité, seuil d'alerte), traitements et posologies, paramètres (délai
    d'alerte général : 7 jours) ; le module d'exemple « notes » est retiré.
 3. Stocks et pointages : stocks partagés ou propres, pointage sur téléphone (saisie rapide), calcul du stock estimé
    et de la date d'épuisement (fonctions pures, très testées : rythmes, quarts, dates de fin, stock partagé).

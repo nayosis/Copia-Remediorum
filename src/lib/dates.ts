@@ -44,3 +44,16 @@ export function lireDate(saisie: string): string | null {
   if (d.getUTCFullYear() !== a || d.getUTCMonth() !== m - 1 || d.getUTCDate() !== j) return null;
   return d.toISOString().slice(0, 10);
 }
+
+/** « 2026-11-03 » + n jours (n négatif : avant). Calcul en UTC : pas de piège d'heure d'été. */
+export function ajouterJours(jour: string, n: number) {
+  const d = new Date(`${jour}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Nombre de jours de `de` à `a` (positif si `a` est après). */
+export const ecartJours = (de: string, a: string) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${de}T00:00:00Z`)) / 86_400_000);
+
+/** Jour de la semaine d'une date : 1 = lundi … 7 = dimanche. */
+export const jourSemaine = (jour: string) => new Date(`${jour}T12:00:00Z`).getUTCDay() || 7;

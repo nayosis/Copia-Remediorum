@@ -3,11 +3,11 @@ import {
   Alert, AppShell, Badge, Box, Burger, Button, Divider, Drawer, Group, Menu, Modal, NavLink, PasswordInput, Stack, Text, UnstyledButton, SegmentedControl, useMantineColorScheme,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconBrandGithub, IconChevronUp, IconDatabaseExport, IconDots, IconHistory, IconKey, IconLayoutDashboard, IconLogout, IconNotes, IconPlus, IconUserCog } from "@tabler/icons-react";
+import { IconBrandGithub, IconChevronUp, IconDatabaseExport, IconDots, IconHistory, IconKey, IconLayoutDashboard, IconLogout, IconAdjustmentsHorizontal, IconPill, IconPlus, IconUserCog } from "@tabler/icons-react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { appelApi } from "../lib/rpc";
 import { deconnexion, estAdmin, LIBELLES_ROLES, peutEcrire, utilisateur } from "../lib/session";
-import { useNouvelleNote } from "../lib/saisie";
+import { useSaisieRapide } from "../lib/saisie";
 import { useEvenements } from "../hooks/useEvenements";
 import { useEcran } from "../lib/ecran";
 import { configuration } from "../lib/configuration";
@@ -21,7 +21,8 @@ type Entree = { to: string; label: string; court?: string; barre?: boolean; icon
 /** Menu de l'application (à adapter) : les entrées `barre` figurent en bas de l'écran du téléphone (3 au plus). */
 const ENTREES: Entree[] = [
   { to: "/", label: "Accueil", barre: true, icone: IconLayoutDashboard, actif: (p) => p === "/" },
-  { to: "/notes", label: "Notes", barre: true, icone: IconNotes, actif: (p) => p.startsWith("/notes") },
+  { to: "/traitements", label: "Traitements", barre: true, icone: IconPill, actif: (p) => p.startsWith("/traitements") },
+  { to: "/parametres", label: "Paramètres", icone: IconAdjustmentsHorizontal, actif: (p) => p.startsWith("/parametres") },
 ];
 
 const ENTREES_ADMIN: Entree[] = [
@@ -146,7 +147,7 @@ function Marque() {
   return (
     <Group gap={8} wrap="nowrap">
       <Logo taille={26} />
-      <Text fw={600} ff="heading" size="lg">
+      <Text fw={600} ff="heading" size="md">
         Copia Remediorum
       </Text>
     </Group>
@@ -165,7 +166,7 @@ function Liens({ chemin, surClic }: { chemin: string; surClic?: () => void }) {
 
 /** Téléphone : les pages les plus utiles en bas de l'écran, la saisie rapide au milieu, le reste dans « Plus ». */
 function BarreBas({ chemin, onPlus }: { chemin: string; onPlus: () => void }) {
-  const nouvelle = useNouvelleNote();
+  const nouvelle = useSaisieRapide();
   const entrees = ENTREES.filter((e) => e.barre);
   // Le bouton de saisie au milieu de la barre (entrées + « Plus »).
   const milieu = Math.ceil((entrees.length + 1) / 2) - 1;
@@ -192,8 +193,8 @@ function BarreBas({ chemin, onPlus }: { chemin: string; onPlus: () => void }) {
               e.actif(chemin),
             )}
           </UnstyledButton>
-          {i === milieu && peutEcrire() && (
-            <UnstyledButton onClick={() => nouvelle()} aria-label="Nouvelle note" style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+          {i === milieu && peutEcrire() && nouvelle && (
+            <UnstyledButton onClick={() => nouvelle()} aria-label="Saisie rapide" style={{ flex: 1, display: "flex", justifyContent: "center" }}>
               <Box
                 w={56}
                 h={56}

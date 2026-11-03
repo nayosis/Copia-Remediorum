@@ -7,7 +7,7 @@ import { Conflit } from "../lib/conflit";
 import { utilisateurCourant } from "../../serveur/tracabilite";
 
 /** Tables dont les fiches se modifient à plusieurs (avec une colonne modifie_le). */
-type TableVersionnee = "note";
+type TableVersionnee = "personne" | "medicament" | "traitement" | "stock" | "pointage";
 
 /**
  * Refuse l'écriture si la fiche a changé depuis la version connue du navigateur, et que ce changement

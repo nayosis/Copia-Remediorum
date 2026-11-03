@@ -1,11 +1,13 @@
 import { Code, Group, Stack, Text } from "@mantine/core";
 import { euros } from "../lib/montants";
-import { CHAMPS_BOOLEENS, CHAMPS_FICHIERS, CHAMPS_IGNORES, CHAMPS_MONTANTS, LIBELLES_CHAMPS } from "../lib/modele";
+import { CHAMPS_BOOLEENS, CHAMPS_FICHIERS, CHAMPS_IGNORES, CHAMPS_MONTANTS, LIBELLES_CHAMPS, lisibleMetier } from "../lib/modele";
 
 type Fiche = Record<string, unknown>;
 
 function lisible(cle: string, v: unknown): string {
   if (v === null || v === undefined || v === "") return "—";
+  const metier = lisibleMetier(cle, v);
+  if (metier !== null) return metier;
   if (CHAMPS_MONTANTS.has(cle) && typeof v === "number") return euros(v);
   if (CHAMPS_BOOLEENS.has(cle)) return v ? "oui" : "non";
   if (CHAMPS_FICHIERS.has(cle) && Array.isArray(v)) {

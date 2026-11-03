@@ -16,8 +16,8 @@ ouvrirComptes(join(DOSSIER_DONNEES, "comptes.db"));
 await installerSuperAdmin("super@app.test", "super-mot-de-passe");
 const { creerApp } = await import("../serveur/app");
 const app = creerApp();
-const notes = await import("../src/data/notes");
-const nbNotes = async () => (await notes.listeNotes()).length;
+const referentiel = await import("../src/data/referentiel");
+const nbPersonnes = async () => (await referentiel.listePersonnes()).length;
 
 const connexion = async () => {
   const r = await app.handle(
@@ -45,22 +45,22 @@ const restaurer = (zip: Uint8Array) => {
 
 describe("sauvegarde", () => {
   test("aller-retour : téléchargement, modifications, restauration de l'état sauvegardé", async () => {
-    await notes.creerNote({ titre: "Avant la sauvegarde" });
-    const avant = await nbNotes();
+    await referentiel.creerPersonne({ prenom: "Jeanne" });
+    const avant = await nbPersonnes();
     writeFileSync(join(DOSSIER_FICHIERS, "11111111-aaaa.pdf"), "facture");
     const zip = await telecharger();
     const contenu = unzipSync(zip);
     // Le dossier de données est partagé par tous les fichiers de tests : d'autres fichiers peuvent s'y trouver.
     expect(Object.keys(contenu)).toEqual(expect.arrayContaining(["donnees.db", "fichiers/11111111-aaaa.pdf", "manifest.json"]));
-    expect(JSON.parse(new TextDecoder().decode(contenu["manifest.json"]))).toMatchObject({ application: "Copia Remediorum", format: 1, compteurs: { Notes: avant } });
+    expect(JSON.parse(new TextDecoder().decode(contenu["manifest.json"]))).toMatchObject({ application: "Copia Remediorum", format: 1, compteurs: { Personnes: avant } });
 
-    await notes.creerNote({ titre: "Après la sauvegarde" });
+    await referentiel.creerPersonne({ prenom: "Après la sauvegarde" });
     writeFileSync(join(DOSSIER_FICHIERS, "22222222-bbbb.pdf"), "autre");
     const r = await restaurer(zip);
     expect(r.status).toBe(200);
     const corps = await r.json();
-    expect(corps.installe.Notes).toBe(avant);
-    expect(await nbNotes()).toBe(avant);
+    expect(corps.installe.Personnes).toBe(avant);
+    expect(await nbPersonnes()).toBe(avant);
     expect(existsSync(join(DOSSIER_FICHIERS, "11111111-aaaa.pdf"))).toBe(true);
     // Base précédente conservée à côté ; les fichiers existants ne sont jamais supprimés.
     expect(existsSync(`${BASE_DONNEES}.avant-restauration`)).toBe(true);
@@ -68,7 +68,7 @@ describe("sauvegarde", () => {
   });
 
   test("ZIP piégé ou étranger refusé, base intacte", async () => {
-    const avant = await nbNotes();
+    const avant = await nbPersonnes();
     const etranger = zipSync({ "photo.jpg": strToU8("x") });
     expect((await (await restaurer(etranger)).json()).erreur).toContain("pas une sauvegarde");
     const piege = zipSync({
@@ -80,7 +80,7 @@ describe("sauvegarde", () => {
     const r = await restaurer(piege);
     expect(r.status).toBe(400);
     expect(existsSync(join(DOSSIER_DONNEES, "..", "evasion.txt"))).toBe(false);
-    expect(await nbNotes()).toBe(avant);
+    expect(await nbPersonnes()).toBe(avant);
   });
 
   test("droits : sans session, ni téléchargement ni restauration", async () => {

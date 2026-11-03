@@ -25,15 +25,15 @@ const ilYA = (jours: number) => new Date(Date.now() - jours * 86_400_000);
 describe("sauvegarde automatique", () => {
   test("ZIP complet et restaurable dans data/sauvegardes ; deux dans la même minute, même lancées ensemble, ne s'écrasent pas", async () => {
     vider();
-    await ok("creerNote", { titre: "Une note" });
-    const nb = (await ok("listeNotes")).length;
+    await ok("creerPersonne", { prenom: "Jeanne" });
+    const nb = (await ok("listePersonnes")).length;
     const quand = new Date(2026, 9, 28, 3, 0);
     // Celle de la nuit et un « Sauvegarder maintenant » au même moment.
     const [a, b] = await Promise.all([sauvegarder("nuit", quand), sauvegarder("manuelle", quand)]);
     expect(a.nom).toBe("copia-remediorum-sauvegarde-2026-10-28_03h00.zip");
     expect(b.nom).toBe("copia-remediorum-sauvegarde-2026-10-28_03h00-2.zip");
     const contenu = unzipSync(new Uint8Array(await Bun.file(join(DOSSIER_SAUVEGARDES, a.nom)).arrayBuffer()));
-    expect(JSON.parse(new TextDecoder().decode(contenu["manifest.json"]))).toMatchObject({ application: "Copia Remediorum", motif: "nuit", compteurs: { Notes: nb } });
+    expect(JSON.parse(new TextDecoder().decode(contenu["manifest.json"]))).toMatchObject({ application: "Copia Remediorum", motif: "nuit", compteurs: { Personnes: nb } });
     expect(readdirSync(DOSSIER_SAUVEGARDES).some((f) => f.endsWith(".partiel"))).toBe(false);
   });
 
@@ -54,22 +54,17 @@ describe("sauvegarde automatique", () => {
     expect(existsSync(join(DOSSIER_SAUVEGARDES, "a-moi.txt"))).toBe(true);
   });
 
-  test("fichiers orphelins effacés au bout de 7 jours ; jamais ceux d'une pièce jointe", async () => {
-    const f = new FormData();
-    f.append("fichier", new File([new Uint8Array([37, 80, 68, 70])], "facture.pdf", { type: "application/pdf" }));
-    const envoi = await (await s.app.handle(new Request("http://local/api/fichiers", { method: "POST", body: f, headers: { "x-app": "1", cookie } }))).json();
-    await ok("creerNote", { titre: "Avec pièce jointe", pieces: [{ fichier: envoi.fichier, nom: envoi.nom }] });
+  test("fichiers orphelins (aucun fichier n'est rattaché en V1) effacés au bout de 7 jours", async () => {
 
     const vieux = "aaaaaaaa-0000-orphelin.pdf";
     const recent = "bbbbbbbb-0000-orphelin.pdf";
     writeFileSync(join(DOSSIER_FICHIERS, vieux), "x");
     writeFileSync(join(DOSSIER_FICHIERS, recent), "x");
-    for (const nom of [vieux, envoi.fichier]) utimesSync(join(DOSSIER_FICHIERS, nom), ilYA(30), ilYA(30));
+    for (const nom of [vieux]) utimesSync(join(DOSSIER_FICHIERS, nom), ilYA(30), ilYA(30));
 
     expect(await nettoyerOrphelins()).toBeGreaterThanOrEqual(1);
     expect(existsSync(join(DOSSIER_FICHIERS, vieux))).toBe(false);
     expect(existsSync(join(DOSSIER_FICHIERS, recent))).toBe(true);
-    expect(existsSync(join(DOSSIER_FICHIERS, envoi.fichier))).toBe(true);
   });
 
   test("la sauvegarde de la nuit note son résultat", async () => {
@@ -97,12 +92,12 @@ describe("routes", () => {
     expect(telechargement.headers.get("content-disposition")).toContain(faite.nom);
     expect((await s.requete("/api/sauvegarde/automatiques/..%2F..%2Fcomptes.db", { cookie })).status).toBe(404);
 
-    const avant = (await ok("listeNotes")).length;
-    await ok("creerNote", { titre: "Après la sauvegarde" });
+    const avant = (await ok("listePersonnes")).length;
+    await ok("creerPersonne", { prenom: "Après la sauvegarde" });
     const admin = await s.compte("admin@famille.fr", "admin");
     expect((await s.requete(`/api/sauvegarde/automatiques/${faite.nom}/restaurer`, { methode: "POST", corps: {}, cookie: admin.cookie })).status).toBe(403);
     const r = await s.requete(`/api/sauvegarde/automatiques/${faite.nom}/restaurer`, { methode: "POST", corps: {}, cookie });
     expect(r.status).toBe(200);
-    expect((await ok("listeNotes")).length).toBe(avant);
+    expect((await ok("listePersonnes")).length).toBe(avant);
   });
 });

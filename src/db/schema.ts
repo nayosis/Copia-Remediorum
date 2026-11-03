@@ -48,45 +48,56 @@ export const journal = sqliteTable(
   (t) => [index("journal_quand_idx").on(t.quand), index("journal_utilisateur_idx").on(t.utilisateur), index("journal_cible_idx").on(t.cible)],
 );
 
-// --- Exemple (à remplacer par le modèle de l'application)
+// --- Référentiel : qui prend quoi, et comment
 
-/** Une note : titre, texte, pièces jointes. Archivée plutôt que supprimée (elle reste dans le journal). */
-export const note = sqliteTable(
-  "note",
-  {
-    id: id(),
-    titre: text("titre").notNull(),
-    texte: text("texte"),
-    archivee: integer("archivee", { mode: "boolean" }).notNull().default(false),
-    creeLe: creeLe(),
-    ...tracabilite(),
-  },
-  (t) => [index("note_archivee_idx").on(t.archivee)],
-);
+/** Une personne suivie (« Jeanne », « Robert »). Archivée plutôt que supprimée (elle reste dans le journal). */
+export const personne = sqliteTable("personne", {
+  id: id(),
+  prenom: text("prenom").notNull(),
+  ordre: integer("ordre").notNull().default(0),
+  archivee: integer("archivee", { mode: "boolean" }).notNull().default(false),
+  creeLe: creeLe(),
+  ...tracabilite(),
+});
+
+/** Un médicament (« Kardégic 75 mg »), compté dans son unité (comprimé, gélule, sachet…). */
+export const medicament = sqliteTable("medicament", {
+  id: id(),
+  nom: text("nom").notNull(),
+  unite: text("unite").notNull().default("comprimé"),
+  /** Seuil d'alerte en quarts d'unité (facultatif) : alerte quand le stock estimé passe dessous. */
+  seuilAlerte: integer("seuil_alerte"),
+  note: text("note"),
+  archive: integer("archive", { mode: "boolean" }).notNull().default(false),
+  creeLe: creeLe(),
+  ...tracabilite(),
+});
 
 /**
- * Un fichier (photo JPEG, PDF) rattaché à une note.
- * Jamais effacé : une pièce jointe retirée est archivée et reste visible depuis le journal (preuve).
+ * Un médicament pris par une personne. `posologie` : JSON (src/lib/posologie.ts) ; vide = sans posologie (si besoin).
+ * `delaiAlerte` : jours avant l'épuisement pour alerter ; vide = délai général (Paramètres).
  */
-export const pieceJointe = sqliteTable(
-  "piece_jointe",
+export const traitement = sqliteTable(
+  "traitement",
   {
     id: id(),
-    noteId: text("note_id")
+    personneId: text("personne_id")
       .notNull()
-      .references(() => note.id, { onDelete: "restrict" }),
-    /** Nom affiché (celui du fichier envoyé). */
-    nom: text("nom").notNull(),
-    /** Nom sur le disque, choisi par le serveur (UUID + extension). */
-    fichier: text("fichier").notNull(),
-    mime: text("mime").notNull(),
-    taille: integer("taille").notNull(),
-    archive: integer("archive", { mode: "boolean" }).notNull().default(false),
+      .references(() => personne.id, { onDelete: "restrict" }),
+    medicamentId: text("medicament_id")
+      .notNull()
+      .references(() => medicament.id, { onDelete: "restrict" }),
+    posologie: text("posologie"),
+    debut: text("debut").notNull(),
+    fin: text("fin"),
+    delaiAlerte: integer("delai_alerte"),
+    note: text("note"),
     creeLe: creeLe(),
     ...tracabilite(),
   },
-  (t) => [index("piece_jointe_note_idx").on(t.noteId)],
+  (t) => [index("traitement_personne_idx").on(t.personneId), index("traitement_medicament_idx").on(t.medicamentId)],
 );
 
-export type Note = typeof note.$inferSelect;
-export type PieceJointe = typeof pieceJointe.$inferSelect;
+export type Personne = typeof personne.$inferSelect;
+export type Medicament = typeof medicament.$inferSelect;
+export type Traitement = typeof traitement.$inferSelect;

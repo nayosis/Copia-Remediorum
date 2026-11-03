@@ -4,8 +4,8 @@ import { Layout } from "./components/Layout";
 import { FournisseurSaisie } from "./lib/saisie";
 import { SurOrdinateur } from "./components/SurOrdinateur";
 import { Accueil } from "./pages/Accueil";
-import { FicheNote } from "./pages/FicheNote";
-import { Notes } from "./pages/Notes";
+import { Parametres } from "./pages/Parametres";
+import { Traitements } from "./pages/Traitements";
 import { Sauvegarde } from "./pages/Sauvegarde";
 import { Connexion } from "./pages/compte/Connexion";
 import { Lien } from "./pages/compte/Lien";
@@ -52,18 +52,9 @@ const reserveAdmin = () => {
 };
 
 export const accueilRoute = createRoute({ getParentRoute: () => application, path: "/", component: Accueil });
-// --- Pages de l'application (EXEMPLE : les notes)
-export const notesRoute = createRoute({
-  getParentRoute: () => application,
-  path: "/notes",
-  component: Notes,
-  // Filtres dans l'adresse : partageables, et conservés au retour arrière.
-  validateSearch: (s: Record<string, unknown>): { q?: string; archivees?: boolean } => ({
-    ...(typeof s.q === "string" && s.q ? { q: s.q } : {}),
-    ...(s.archivees === true || s.archivees === "true" ? { archivees: true } : {}),
-  }),
-});
-export const ficheNoteRoute = createRoute({ getParentRoute: () => application, path: "/notes/$id", component: FicheNote });
+// --- Pages de l'application
+export const traitementsRoute = createRoute({ getParentRoute: () => application, path: "/traitements", component: Traitements });
+const parametres = createRoute({ getParentRoute: () => application, path: "/parametres", component: surOrdinateur(Parametres, "Paramètres") });
 
 // --- Pages du socle (admins, sur ordinateur)
 const sauvegarde = createRoute({ getParentRoute: () => application, path: "/sauvegarde", component: surOrdinateur(Sauvegarde, "Sauvegarde"), beforeLoad: reserveAdmin });
@@ -71,7 +62,7 @@ const comptes = createRoute({ getParentRoute: () => application, path: "/comptes
 const journal = createRoute({ getParentRoute: () => application, path: "/journal", component: surOrdinateur(Journal, "Journal"), beforeLoad: reserveAdmin });
 
 export const router = createRouter({
-  routeTree: racine.addChildren([connexionRoute, lienRoute, application.addChildren([accueilRoute, notesRoute, ficheNoteRoute, sauvegarde, comptes, journal])]),
+  routeTree: racine.addChildren([connexionRoute, lienRoute, application.addChildren([accueilRoute, traitementsRoute, parametres, sauvegarde, comptes, journal])]),
   history: createBrowserHistory(),
 });
 

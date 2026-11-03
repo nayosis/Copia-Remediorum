@@ -1,19 +1,12 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { ModalNote } from "../components/ModalNote";
+import { createContext, useContext, type ReactNode } from "react";
 
 /**
- * Saisie rapide, ouverte de n'importe où (bouton « + » du téléphone, accueil, liste) : le modèle à suivre pour
- * l'objet que l'application saisit le plus souvent. EXEMPLE : une note.
+ * Saisie rapide, ouverte de n'importe où (bouton « + » du téléphone, accueil) : l'objet que l'application saisit le
+ * plus souvent. null : pas de saisie rapide (le bouton « + » est masqué).
  */
-const Saisie = createContext<() => void>(() => {});
-export const useNouvelleNote = () => useContext(Saisie);
+const Saisie = createContext<(() => void) | null>(null);
+export const useSaisieRapide = () => useContext(Saisie);
 
 export function FournisseurSaisie({ children }: { children: ReactNode }) {
-  const [ouverte, setOuverte] = useState(false);
-  return (
-    <Saisie.Provider value={() => setOuverte(true)}>
-      {children}
-      <ModalNote opened={ouverte} onClose={() => setOuverte(false)} />
-    </Saisie.Provider>
-  );
+  return <Saisie.Provider value={null}>{children}</Saisie.Provider>;
 }
