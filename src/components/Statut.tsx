@@ -13,7 +13,7 @@ export const STATUTS: Record<Statut, { libelle: string; couleur: string }> = {
 export function BadgeStatut({ etat, size = "sm" }: { etat: EtatStock; size?: string }) {
   const s = STATUTS[etat.statut];
   return (
-    <Badge color={s.couleur} variant={etat.statut === "ok" || etat.statut === "sans_suivi" ? "light" : "filled"} size={size}>
+    <Badge style={{ flexShrink: 0, overflow: "visible" }} color={s.couleur} variant={etat.statut === "ok" || etat.statut === "sans_suivi" ? "light" : "filled"} size={size}>
       {s.libelle}
     </Badge>
   );

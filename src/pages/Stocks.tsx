@@ -124,9 +124,9 @@ export function Stocks() {
             <Table.Tr>
               <Table.Th>Médicament</Table.Th>
               <Table.Th>Boîtes de</Table.Th>
-              <Table.Th>Ce soir (estimé)</Table.Th>
+              <Table.Th style={{ whiteSpace: "nowrap" }}>Ce soir</Table.Th>
               <Table.Th>Échéance</Table.Th>
-              <Table.Th>Dernier pointage</Table.Th>
+              <Table.Th style={{ whiteSpace: "nowrap" }}>Pointé le</Table.Th>
               <Table.Th>État</Table.Th>
               <Table.Th />
             </Table.Tr>
@@ -136,12 +136,12 @@ export function Stocks() {
               <Table.Tr key={s.id} className="ligne-cliquable" onClick={() => ouvrir(s)} c={s.archive ? "dimmed" : undefined}>
                 <Table.Td fw={500}>{s.medicament}</Table.Td>
                 <Table.Td>{s.prenom ?? "Partagé"}</Table.Td>
-                <Table.Td>{estimeLisible(s)}</Table.Td>
+                <Table.Td style={{ whiteSpace: "nowrap" }}>{estimeLisible(s)}</Table.Td>
                 <Table.Td>
-                  <Text size="sm">{echeanceLisible(s.etat, jour)}</Text>
+                  <Text size="sm">{s.etat.statut === "inconnu" ? "Jamais pointé" : echeanceLisible(s.etat, jour)}</Text>
                 </Table.Td>
-                <Table.Td>{s.etat.pointage ? dateLisible(s.etat.pointage.date) : "—"}</Table.Td>
-                <Table.Td>
+                <Table.Td style={{ whiteSpace: "nowrap" }}>{s.etat.pointage ? dateLisible(s.etat.pointage.date, { day: "numeric", month: "short", year: "numeric" }) : "—"}</Table.Td>
+                <Table.Td style={{ whiteSpace: "nowrap" }}>
                   <BadgeStatut etat={s.etat} />
                 </Table.Td>
                 <Table.Td>

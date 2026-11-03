@@ -5,54 +5,70 @@
 <h1 align="center">Copia Remediorum</h1>
 
 <p align="center">
-  <em>La fondation</em> — socle d'application familiale auto-hébergée, logiciel libre.
+  <em>La réserve des remèdes</em> — logiciel libre pour savoir quand faire renouveler les médicaments de ses parents.
 </p>
 
-Le point de départ des applications de la même famille ([Custos Domus](https://github.com/nayosis/custos-domus),
-[Cura Parentum](https://github.com/nayosis/cura-parentum)…) : tout ce qui ne dépend pas du métier, prêt à l'emploi, et
-un petit module d'exemple (des notes avec pièces jointes) qui montre chaque mécanisme.
+On s'occupe des médicaments de ses parents : l'armoire, les boîtes, les ordonnances. Le but n'est pas de cocher chaque
+prise, mais de **ne jamais manquer** : Copia Remediorum connaît la posologie de chacun, compte ce qu'il reste à partir
+du dernier comptage, et dit **quand appeler le médecin**, avec une notification sur le téléphone.
 
-## Ce que le socle apporte
+<p align="center">
+  <img src="docs/captures/a-renouveler.png" alt="Page « À renouveler » : par personne, les médicaments à faire renouveler et leur échéance" width="820">
+</p>
 
-- **Comptes** : rôles lecture, écriture, admin ; super admin défini dans `.env` ou créé au premier lancement ;
-  invitations et réinitialisations par lien à usage unique ; mots de passe argon2id.
-- **Fonctions métier par RPC** : écrites une fois dans `src/data/`, exécutées sur le serveur, appelées depuis
-  l'interface comme des fonctions ordinaires (typées).
-- **Journal de preuve** : chaque écriture, par qui, quand, la fiche entière avant et après ; historique par fiche.
-- **Traçabilité** automatique (créé / modifié par, le) et **conflits d'écriture** signalés (« modifié entre-temps par… »).
-- **Mise à jour en direct** des autres navigateurs ouverts.
-- **Fichiers** (photos, PDF) et **sauvegardes** : une complète chaque nuit, téléchargeable et restaurable en un clic.
-- **Téléphone et ordinateur** : interface adaptée, application installable (PWA).
-- **Docker** : une image multi-architecture publiée sur ghcr.io à chaque version.
+## Ce qu'on y trouve
 
-## Démarrer une nouvelle application
+- **À renouveler** : par personne, les médicaments dans leur délai d'alerte ou épuisés, avec la date d'épuisement
+  estimée ; la liste s'imprime pour le rendez-vous.
+- **Traitements** : pour chaque personne, ses médicaments et leur posologie — matin, midi, soir, coucher, par quart de
+  comprimé ; tous les jours, un jour sur N ou certains jours ; traitement temporaire ; « si besoin ».
+- **Stocks** : partagés (l'armoire commune) ou propres à une personne. Le stock estimé ce soir et la date
+  d'épuisement se recalculent à chaque **pointage** : on compte ce qui reste, et l'oubli d'une prise ou la boîte perdue
+  sont rattrapés.
+- **Alertes** : 7 jours avant l'épuisement par défaut, réglable par traitement ; un seuil pour les médicaments pris
+  « si besoin ».
+- **Notifications** sur le téléphone (application installée) : le jour où l'alerte commence, puis chaque semaine.
+- **Comptes** pour la famille ou l'aide à domicile (lecture, écriture, admin), **journal** de chaque modification,
+  **sauvegarde** chaque nuit.
 
-1. Sur GitHub, **Use this template** → nouveau dépôt.
-2. Puis :
+<table>
+  <tr>
+    <td width="33%"><img src="docs/captures/a-renouveler-telephone.png" alt="À renouveler, sur téléphone"></td>
+    <td width="33%"><img src="docs/captures/pointage-telephone.png" alt="Pointage d'un stock, sur téléphone"></td>
+    <td width="33%"><img src="docs/captures/stocks-telephone.png" alt="Stocks, sur téléphone"></td>
+  </tr>
+  <tr>
+    <td align="center">À renouveler</td>
+    <td align="center">Pointer un stock (bouton « + »)</td>
+    <td align="center">Stocks</td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/captures/stocks.png" alt="Liste des stocks : ce soir, échéance, dernier pointage, état" width="820">
+</p>
+<p align="center">
+  <img src="docs/captures/fiche-stock.png" alt="Fiche d'un stock : estimation, épuisement, qui y puise, pointages et écarts" width="820">
+</p>
+<p align="center">
+  <img src="docs/captures/traitement.png" alt="Saisie d'un traitement et de sa posologie" width="820">
+</p>
+
+## Installer (Docker)
 
 ```bash
-bun install
-bun scripts/renommer.ts "Nom Affiché" compte/depot "Ce que fait l'application, en une phrase."
+mkdir copia-remediorum && cd copia-remediorum
+curl -O https://raw.githubusercontent.com/nayosis/copia-remediorum/main/docker-compose.yml
+docker compose up -d
 ```
 
-3. Choisir sa couleur et son logo (`src/theme.ts`, `src/components/Logo.tsx`, `public/icone.svg`, puis
-   `bun scripts/icones.ts`).
-4. Cadrer avec Claude (« on cadre le projet ») : `docs/conception.md` se remplit au fil de la discussion.
+Puis ouvrir `http://<serveur>:3000` : le premier compte créé est l'administrateur principal. Réglages facultatifs :
+[.env.exemple](.env.exemple). Les notifications demandent une adresse **HTTPS** : derrière un reverse proxy, voir
+[docker/nginx-exemple.conf](docker/nginx-exemple.conf). Sur iPhone, ajoutez l'application à l'écran d'accueil (Safari,
+Partager, « Sur l'écran d'accueil »), puis activez les notifications depuis le menu du compte.
 
-## Travailler avec Claude
-
-```
-CLAUDE.md                                ← lu à chaque session : règles, où trouver quoi, étape en cours
-docs/conception.md                       ← le QUOI : besoin, modèle, règles métier, plan (propre à l'application)
-.claude/skills/cadrage/SKILL.md          ← comment mener la discussion qui remplit conception.md
-.claude/skills/architecture/SKILL.md     ← principes techniques communs
-.claude/skills/socle-technique/SKILL.md  ← pile, conventions, recettes pas à pas
-```
-
-Claude ne garde aucune mémoire d'une session à l'autre : ce qui doit durer s'écrit dans le dépôt. `CLAUDE.md` est
-lu en entier à chaque session (il reste court) ; d'un skill, seule la description est lue au départ, le reste quand
-la tâche s'y rapporte. *Réutilisable* → skill ; *propre à l'application* → conception.md ; *à savoir à chaque
-session* → CLAUDE.md.
+Les sauvegardes de la nuit restent sur le même disque que les données : recopier le dossier `data/` ailleurs avec les
+sauvegardes habituelles du serveur.
 
 ## Développement
 
@@ -65,18 +81,10 @@ bun run type-check
 bun run db:generate       # après modification de src/db/schema.ts → nouvelle migration dans drizzle/
 ```
 
-Bun + Elysia + SQLite (Drizzle) côté serveur, React + Mantine + TanStack côté interface.
-
-## Installer (Docker)
-
-```bash
-mkdir copia-remediorum && cd copia-remediorum
-curl -O https://raw.githubusercontent.com/nayosis/copia-remediorum/main/docker-compose.yml
-docker compose up -d
-```
-
-Puis ouvrir `http://<serveur>:3000` : le premier compte créé est l'administrateur principal. Réglages facultatifs :
-[.env.exemple](.env.exemple) ; derrière un reverse proxy HTTPS : [docker/nginx-exemple.conf](docker/nginx-exemple.conf).
+Bun + Elysia + SQLite (Drizzle) côté serveur, React + Mantine + TanStack côté interface, socle repris du modèle
+[Fundamentum](https://github.com/nayosis/fundamentum) (comme [Cura Parentum](https://github.com/nayosis/cura-parentum)).
+Conception détaillée : [docs/conception.md](docs/conception.md). Le calcul du stock est dans
+[src/lib/stock.ts](src/lib/stock.ts), fonctions pures et testées.
 
 ## Licence
 
