@@ -70,8 +70,10 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 
 ## Exports
 
-- **Une page « À renouveler »** (décidé) : les médicaments en alerte, par personne, avec la date d'épuisement
-  estimée et le stock du dernier pointage. Pas de PDF ni d'export en V1.
+- **Une page « À renouveler »** (décidé), page d'accueil : les médicaments en alerte ou épuisés, **par personne** (un
+  stock partagé figure chez chaque personne qui y puise, chacune ayant son ordonnance), avec la posologie, la date
+  d'épuisement estimée et le stock estimé ce soir. Puis les stocks jamais pointés et les prochaines échéances.
+- Elle s'**imprime** (bouton « Imprimer » : la liste seule, sans menu). Pas de PDF ni d'export en V1.
 
 ## Comptes
 
@@ -108,7 +110,7 @@ Personne ── Traitement (0..n) ──┬─ Médicament
    d'alerte général : 7 jours) ; le module d'exemple « notes » est retiré.
 3. Stocks et pointages (fait) : stocks partagés ou propres, pointage sur téléphone (saisie rapide), calcul du stock estimé
    et de la date d'épuisement (fonctions pures, très testées : rythmes, quarts, dates de fin, stock partagé).
-4. « À renouveler » : la page (accueil de l'application), par personne, et la fiche de chaque stock (pointages,
+4. « À renouveler » (fait) : la page (accueil de l'application), par personne, et la fiche de chaque stock (pointages,
    consommation, historique).
 5. Notifications : module Web Push (abonnement par compte, tâche quotidienne du serveur, rappel hebdomadaire).
 6. Publication : version 1.0, image ghcr.io, déploiement personnel.

@@ -38,4 +38,4 @@ bun scripts/renommer.ts "Nom" compte/depot "Description"   # une fois, dans une 
 
 ## État
 
-Étape 4 du plan de la V1 (`docs/conception.md`) : page « À renouveler ». Étapes 2 (référentiel) et 3 (stocks) faites.
+Étape 5 du plan de la V1 (`docs/conception.md`) : notifications. Étapes 2 à 4 faites.

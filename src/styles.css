@@ -79,3 +79,25 @@ body,
   font-size: 28px !important;
   height: 56px;
 }
+
+/* Impression de « À renouveler » : la liste seule, sans menu ni boutons. */
+@media print {
+  .mantine-AppShell-navbar,
+  .pas-a-l-impression {
+    display: none !important;
+  }
+  .mantine-AppShell-main {
+    padding-left: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  html,
+  body,
+  #root {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .carte-renouveler {
+    break-inside: avoid;
+  }
+}

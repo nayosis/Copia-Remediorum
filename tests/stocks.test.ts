@@ -115,3 +115,28 @@ describe("stocks", () => {
     expect((await ok("stocksAPointer")).find((x: { id: string }) => x.id === st.id).libelle).toBe("Xarelto — partagé");
   });
 });
+
+describe("à renouveler", () => {
+  test("par personne : un stock partagé figure chez chacune ; jamais pointés à part ; prochaines échéances", async () => {
+    const paul = await ok("creerPersonne", { prenom: "Paul" });
+    const lucie = await ok("creerPersonne", { prenom: "Lucie" });
+    const commun = await ok("creerMedicament", { nom: "Commun" });
+    const tranquille = await ok("creerMedicament", { nom: "Tranquille" });
+    const jamais = await ok("creerMedicament", { nom: "Jamais compté" });
+    await ok("creerTraitement", { personneId: paul, medicamentId: commun, posologie: unParJour, debut: ilYA(10) });
+    await ok("creerTraitement", { personneId: lucie, medicamentId: commun, posologie: unParJour, debut: ilYA(10) });
+    await ok("creerTraitement", { personneId: lucie, medicamentId: tranquille, posologie: unParJour, debut: ilYA(10) });
+    await ok("creerTraitement", { personneId: paul, medicamentId: jamais, posologie: unParJour, debut: ilYA(10) });
+    const [stCommun] = await stocksDe(commun);
+    const [stTranquille] = await stocksDe(tranquille);
+    await ok("pointer", { stockId: stCommun.id, date: jour, quantite: 6 * C }); // 2 par jour : 3 jours
+    await ok("pointer", { stockId: stTranquille.id, date: jour, quantite: 60 * C });
+
+    const r = await ok("aRenouveler");
+    const de = (prenom: string) => r.parPersonne.find((p: { prenom: string }) => p.prenom === prenom)?.lignes ?? [];
+    expect(de("Paul").map((l: { medicament: string; partageAvec: string[] }) => [l.medicament, l.partageAvec])).toEqual([["Commun", ["Lucie"]]]);
+    expect(de("Lucie").map((l: { medicament: string }) => l.medicament)).toEqual(["Commun"]);
+    expect(r.aPointer.map((s: { medicament: string }) => s.medicament)).toContain("Jamais compté");
+    expect(r.prochaines.map((s: { medicament: string }) => s.medicament)).toContain("Tranquille");
+  });
+});

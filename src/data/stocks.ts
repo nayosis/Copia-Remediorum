@@ -219,3 +219,54 @@ export async function supprimerPointage(id: string) {
   if (!adminCourant()) throw new ErreurMetier("Seul un admin peut supprimer un pointage.", 403);
   await query("delete from pointage where id = ?", [id]);
 }
+
+export type LigneARenouveler = {
+  stockId: string;
+  medicament: string;
+  unite: string;
+  etat: EtatStock;
+  /** Posologie de cette personne pour ce médicament. */
+  posologie: Posologie | null;
+  /** Stock partagé : les autres personnes qui y puisent. */
+  partageAvec: string[];
+};
+
+/**
+ * Page « À renouveler » : par personne, les médicaments en alerte ou épuisés (un stock partagé figure chez chaque
+ * personne qui y puise : chacune a son ordonnance) ; puis les stocks jamais pointés, et les prochaines échéances.
+ */
+export async function aRenouveler(f: { jour?: string } = {}) {
+  const jour = f.jour ?? aujourdhui();
+  const stocks = await listeStocks({ jour });
+  const personnes = (await query("select id, prenom from personne where archivee = 0 order by ordre, prenom")).map(([id, prenom]) => ({ id: id as string, prenom: prenom as string }));
+  const enCours = (s: StockCalcule) => s.traitements.filter((t) => !t.fin || t.fin >= jour);
+  const urgents = stocks.filter((s) => s.etat.statut === "alerte" || s.etat.statut === "epuise");
+  const parPersonne = personnes
+    .map((p) => ({
+      ...p,
+      lignes: urgents.flatMap((s): LigneARenouveler[] => {
+        const siens = enCours(s).filter((t) => t.personneId === p.id);
+        if (!siens.length) return [];
+        return [
+          {
+            stockId: s.id,
+            medicament: s.medicament,
+            unite: s.unite,
+            etat: s.etat,
+            posologie: siens[0].posologie,
+            partageAvec: [...new Set(enCours(s).filter((t) => t.personneId !== p.id).map((t) => t.prenom))],
+          },
+        ];
+      }),
+    }))
+    .filter((p) => p.lignes.length);
+  return {
+    jour,
+    parPersonne,
+    /** Stocks en alerte sans traitement en cours (rare : seuil d'un stock que plus personne ne prend). */
+    autres: urgents.filter((s) => !enCours(s).length),
+    aPointer: stocks.filter((s) => s.etat.statut === "inconnu" && enCours(s).length),
+    prochaines: stocks.filter((s) => s.etat.statut === "ok" && s.etat.epuisement).slice(0, 6),
+    nbPersonnes: personnes.length,
+  };
+}

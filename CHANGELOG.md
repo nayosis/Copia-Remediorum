@@ -7,6 +7,8 @@
 - **Traitements** : pour chaque personne, ses médicaments et leur posologie (matin, midi, soir, coucher, par quart de
   comprimé ; tous les jours, un jour sur N ou certains jours ; date de fin pour un traitement temporaire ; « sans
   posologie » pour un médicament pris si besoin), avec un délai d'alerte propre si besoin.
+- **À renouveler** (accueil) : par personne, ce qu'il faut demander au médecin, avec l'échéance ; stocks jamais pointés,
+  prochaines échéances ; imprimable.
 - **Stocks** : partagés (l'armoire commune) ou propres à une personne ; pour chacun, le stock estimé ce soir, la date
   d'épuisement et le moment de renouveler (délai d'alerte, ou seuil du médicament). Fiche d'un stock : qui y puise, ses
   pointages avec l'écart au calcul, son historique.
