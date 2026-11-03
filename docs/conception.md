@@ -51,7 +51,13 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 - **Seul le stock déclenche l'alerte** (décidé) : pas de suivi de l'ordonnance (validité, renouvellements) en V1.
 - **Un seul mouvement en V1 : le pointage** (décidé), en nombre d'unités. Nouvelles boîtes, boîte perdue, oubli de
   prise : on recompte. Pas de date de péremption.
-- Un pointage se corrige (admins) ; il reste au journal avec la fiche avant / après.
+- Un pointage se corrige ou se supprime (admins) ; il reste au journal avec la fiche avant / après. Le rôle écriture
+  pointe (un nouveau pointage remplace le précédent dans le calcul).
+- **Création des stocks** : le premier traitement d'un médicament crée son **stock partagé** (le cas courant) ; un
+  stock propre à une personne se crée depuis la page Stocks. Archiver un stock propre renvoie ses traitements au stock
+  partagé.
+- **Écart d'un pointage** (fiche du stock) : compté − prévu d'après le pointage précédent ; négatif : prise en trop,
+  boîte perdue ; positif : oubli de prise, nouvelles boîtes. Il aide à repérer les oublis, sans rien bloquer.
 
 ## Fichiers
 
@@ -100,7 +106,7 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 1. Socle (fait) : dépôt créé depuis le modèle Fundamentum, renommé, couleur et logo.
 2. Référentiel (fait) : personnes, médicaments (unité, seuil d'alerte), traitements et posologies, paramètres (délai
    d'alerte général : 7 jours) ; le module d'exemple « notes » est retiré.
-3. Stocks et pointages : stocks partagés ou propres, pointage sur téléphone (saisie rapide), calcul du stock estimé
+3. Stocks et pointages (fait) : stocks partagés ou propres, pointage sur téléphone (saisie rapide), calcul du stock estimé
    et de la date d'épuisement (fonctions pures, très testées : rythmes, quarts, dates de fin, stock partagé).
 4. « À renouveler » : la page (accueil de l'application), par personne, et la fiche de chaque stock (pointages,
    consommation, historique).

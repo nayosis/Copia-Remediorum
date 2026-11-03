@@ -98,6 +98,46 @@ export const traitement = sqliteTable(
   (t) => [index("traitement_personne_idx").on(t.personneId), index("traitement_medicament_idx").on(t.medicamentId)],
 );
 
+// --- Stocks : ce qu'il y a dans l'armoire, connu par les pointages
+
+/**
+ * Une réserve d'un médicament : partagée (personne vide : l'armoire commune) ou propre à une personne.
+ * Un traitement puise dans le stock propre à sa personne s'il existe, sinon dans le stock partagé (src/data/stocks.ts).
+ */
+export const stock = sqliteTable(
+  "stock",
+  {
+    id: id(),
+    medicamentId: text("medicament_id")
+      .notNull()
+      .references(() => medicament.id, { onDelete: "restrict" }),
+    personneId: text("personne_id").references(() => personne.id, { onDelete: "restrict" }),
+    archive: integer("archive", { mode: "boolean" }).notNull().default(false),
+    creeLe: creeLe(),
+    ...tracabilite(),
+  },
+  (t) => [index("stock_medicament_idx").on(t.medicamentId)],
+);
+
+/** Un comptage : le soir de `date`, après les prises du jour, il restait `quantite` (quarts d'unité). */
+export const pointage = sqliteTable(
+  "pointage",
+  {
+    id: id(),
+    stockId: text("stock_id")
+      .notNull()
+      .references(() => stock.id, { onDelete: "restrict" }),
+    date: text("date").notNull(),
+    quantite: integer("quantite").notNull(),
+    note: text("note"),
+    creeLe: creeLe(),
+    ...tracabilite(),
+  },
+  (t) => [index("pointage_stock_date_idx").on(t.stockId, t.date)],
+);
+
 export type Personne = typeof personne.$inferSelect;
 export type Medicament = typeof medicament.$inferSelect;
 export type Traitement = typeof traitement.$inferSelect;
+export type Stock = typeof stock.$inferSelect;
+export type Pointage = typeof pointage.$inferSelect;

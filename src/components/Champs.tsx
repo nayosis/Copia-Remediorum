@@ -28,7 +28,7 @@ export function ChampQuantite(props: {
   placeholder?: string;
   w?: number | string;
   "data-autofocus"?: boolean;
-  size?: string;
+  className?: string;
 }) {
   const { valeur, onChange, pas = 0.25, ...reste } = props;
   return (

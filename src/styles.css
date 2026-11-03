@@ -72,3 +72,10 @@ body,
 .mantine-Card-root {
   background-color: var(--t-surface);
 }
+
+/* Quantité comptée (pointage) : en grand, même sur écran tactile (plus de 16 px : pas d'agrandissement par Safari). */
+.champ-quantite input,
+.champ-quantite input.mantine-Input-input {
+  font-size: 28px !important;
+  height: 56px;
+}

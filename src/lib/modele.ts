@@ -4,6 +4,7 @@
  */
 import { posologieLisible, type Posologie } from "./posologie";
 import { quantiteLisible } from "./quantites";
+import { dateLisible } from "./dates";
 
 /** Libellés lisibles des fonctions d'écriture (journal) ; les autres sont affichées telles quelles. */
 export const LIBELLES_FONCTIONS: Record<string, string> = {
@@ -17,6 +18,11 @@ export const LIBELLES_FONCTIONS: Record<string, string> = {
   creerTraitement: "Nouveau traitement",
   majTraitement: "Traitement modifié",
   supprimerTraitement: "Traitement supprimé",
+  creerStock: "Nouveau stock",
+  archiverStock: "Stock archivé / désarchivé",
+  pointer: "Pointage",
+  majPointage: "Pointage corrigé",
+  supprimerPointage: "Pointage supprimé",
 };
 
 /** Libellés des champs dans les écarts avant / après du journal. */
@@ -35,6 +41,9 @@ export const LIBELLES_CHAMPS: Record<string, string> = {
   debut: "Début",
   fin: "Fin",
   delai_alerte: "Délai d'alerte (jours)",
+  stock: "Stock",
+  date: "Date",
+  quantite: "Quantité",
 };
 
 /** Colonnes techniques, jamais montrées dans un écart (les colonnes de liens `*_id` sont ajoutées d'office). */
@@ -52,6 +61,7 @@ export const CHAMPS_FICHIERS = new Set<string>([]);
 /** Champs propres à l'application, affichés autrement que tels quels (null : affichage par défaut). */
 export function lisibleMetier(cle: string, v: unknown): string | null {
   if ((cle === "seuil_alerte" || cle === "quantite") && typeof v === "number") return quantiteLisible(v);
+  if ((cle === "date" || cle === "debut" || cle === "fin") && typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) return dateLisible(v);
   if (cle === "posologie") {
     try {
       return posologieLisible(typeof v === "string" ? (JSON.parse(v) as Posologie) : null);

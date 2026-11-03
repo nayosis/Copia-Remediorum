@@ -3,7 +3,7 @@
  * Un traitement terminé garde sa date de fin : il ne consomme plus, et reste visible dans l'historique.
  */
 import { and, asc, eq, getTableColumns, gte, isNull, or, sql, type SQL } from "drizzle-orm";
-import { db, newId } from "../db/client";
+import { batch, db, newId, query, type Statement } from "../db/client";
 import { medicament, personne, traitement } from "../db/schema";
 import { ErreurMetier } from "../../serveur/erreurs";
 import { adminCourant } from "../../serveur/tracabilite";
@@ -65,20 +65,23 @@ const verifierDates = (debut: string, fin: string | null) => {
 
 // --- Écriture
 
+/**
+ * Nouveau traitement. Si son médicament n'a encore aucun stock (ni partagé, ni propre à la personne), un stock partagé
+ * est créé : c'est le cas courant (l'armoire commune) ; un stock propre se crée ensuite depuis la page des stocks.
+ */
 export async function creerTraitement(v: SaisieTraitement) {
   await verifierSaisie(v);
   verifierDates(v.debut, v.fin ?? null);
   const id = newId();
-  await db.insert(traitement).values({
-    id,
-    personneId: v.personneId,
-    medicamentId: v.medicamentId,
-    posologie: v.posologie ? JSON.stringify(v.posologie) : null,
-    debut: v.debut,
-    fin: v.fin ?? null,
-    delaiAlerte: v.delaiAlerte ?? null,
-    note: v.note?.trim() || null,
-  });
+  const stocks = await query("select 1 from stock where medicament_id = ? and archive = 0 and (personne_id is null or personne_id = ?)", [v.medicamentId, v.personneId]);
+  const sts: Statement[] = stocks.length ? [] : [{ sql: "insert into stock (id, medicament_id) values (?, ?)", params: [newId(), v.medicamentId] }];
+  await batch([
+    ...sts,
+    {
+      sql: "insert into traitement (id, personne_id, medicament_id, posologie, debut, fin, delai_alerte, note) values (?, ?, ?, ?, ?, ?, ?, ?)",
+      params: [id, v.personneId, v.medicamentId, v.posologie ? JSON.stringify(v.posologie) : null, v.debut, v.fin ?? null, v.delaiAlerte ?? null, v.note?.trim() || null],
+    },
+  ]);
   return id;
 }
 

@@ -1,0 +1,228 @@
+import { useState } from "react";
+import { ActionIcon, Anchor, Badge, Button, Card, Group, Menu, Modal, SimpleGrid, Stack, Table, Text, Title } from "@mantine/core";
+import { modals } from "@mantine/modals";
+import { IconArchive, IconArchiveOff, IconArrowLeft, IconDots, IconPencil, IconTrash } from "@tabler/icons-react";
+import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { archiverStock, ficheStock, majPointage, supprimerPointage } from "../data/stocks";
+import { Historique } from "../components/Historique";
+import { BadgeStatut, echeanceLisible } from "../components/Statut";
+import { ChampDate, ChampQuantite } from "../components/Champs";
+import { aujourdhui, dateLisible } from "../lib/dates";
+import { useEcran } from "../lib/ecran";
+import { posologieLisible } from "../lib/posologie";
+import { quantiteAvecUnite, quantiteLisible } from "../lib/quantites";
+import { ecrire } from "../lib/query";
+import { useSaisieRapide } from "../lib/saisie";
+import { estAdmin, peutEcrire } from "../lib/session";
+import { ficheStockRoute } from "../router";
+
+type Fiche = Awaited<ReturnType<typeof ficheStock>>;
+type LignePointage = Fiche["pointages"][number];
+
+function Chiffre({ label, valeur, detail }: { label: string; valeur: string; detail?: string }) {
+  return (
+    <Card withBorder padding="md">
+      <Text size="sm" c="dimmed">
+        {label}
+      </Text>
+      <Text fz={24} fw={700} lh={1.2} mt={4}>
+        {valeur}
+      </Text>
+      {detail && (
+        <Text size="xs" c="dimmed" mt={2}>
+          {detail}
+        </Text>
+      )}
+    </Card>
+  );
+}
+
+/** Correction d'un pointage (admins). */
+function ModalCorrection({ pointage, unite, onClose }: { pointage: LignePointage | null; unite: string; onClose: () => void }) {
+  const [quantite, setQuantite] = useState<number | null>(null);
+  const [date, setDate] = useState<string | null>(null);
+  if (!pointage) return null;
+  const q = quantite ?? pointage.quantite;
+  const d = date ?? pointage.date;
+  return (
+    <Modal opened onClose={onClose} title="Corriger le pointage">
+      <Stack>
+        <ChampQuantite label={`Il restait (${unite})`} valeur={q} onChange={setQuantite} pas={0.5} />
+        <ChampDate label="Le soir du" required value={d} onChange={setDate} />
+        <Button onClick={async () => (await ecrire(() => majPointage(pointage.id, { quantite: q, date: d }, pointage.modifieLe))) !== undefined && onClose()}>
+          Enregistrer
+        </Button>
+      </Stack>
+    </Modal>
+  );
+}
+
+/** Fiche d'un stock : où en est-on, qui y puise, et l'histoire de ses pointages (écarts avec le calcul). */
+export function FicheStock() {
+  const { id } = ficheStockRoute.useParams();
+  const { telephone } = useEcran();
+  const pointerStock = useSaisieRapide();
+  const { data: s, error } = useQuery({ queryKey: ["stock", id], queryFn: () => ficheStock(id) });
+  const [correction, setCorrection] = useState<LignePointage | null>(null);
+  if (error) return <Text p="xl">{error.message}</Text>;
+  if (!s) return null;
+  const jour = aujourdhui();
+  const enCours = s.traitements.filter((t) => !t.fin || t.fin >= jour);
+
+  const supprimer = (p: LignePointage) =>
+    modals.openConfirmModal({
+      title: "Supprimer ce pointage ?",
+      children: <Text size="sm">Le calcul repartira du pointage précédent. Le journal garde la trace de celui-ci.</Text>,
+      labels: { confirm: "Supprimer", cancel: "Annuler" },
+      confirmProps: { color: "red" },
+      onConfirm: () => ecrire(() => supprimerPointage(p.id)),
+    });
+
+  return (
+    <Stack p={telephone ? "md" : "xl"} gap="md" maw={1000}>
+      <Group justify="space-between">
+        <Anchor component={Link} to="/stocks" size="sm">
+          <Group gap={4}>
+            <IconArrowLeft size={14} /> Stocks
+          </Group>
+        </Anchor>
+        {peutEcrire() && !telephone && (
+          <Button
+            size="xs"
+            variant="default"
+            leftSection={s.archive ? <IconArchiveOff size={14} /> : <IconArchive size={14} />}
+            onClick={() => ecrire(() => archiverStock(s.id, !s.archive))}
+          >
+            {s.archive ? "Désarchiver" : "Archiver"}
+          </Button>
+        )}
+      </Group>
+      <Group justify="space-between" align="flex-start">
+        <div>
+          <Group gap="xs">
+            <Title order={2}>{s.medicament}</Title>
+            <BadgeStatut etat={s.etat} size="lg" />
+            {s.archive && <Badge color="gray">Archivé</Badge>}
+          </Group>
+          <Text c="dimmed">{s.prenom ? `Boîtes de ${s.prenom}` : "Stock partagé (armoire commune)"}</Text>
+        </div>
+        {peutEcrire() && pointerStock && !s.archive && <Button onClick={() => pointerStock(s.id)}>Pointer</Button>}
+      </Group>
+
+      <SimpleGrid cols={{ base: 1, sm: 3 }}>
+        <Chiffre
+          label="Ce soir (estimé)"
+          valeur={s.etat.estime === null ? "—" : quantiteAvecUnite(s.etat.estime, s.unite)}
+          detail={s.etat.pointage ? `Compté ${quantiteAvecUnite(s.etat.pointage.quantite, s.unite)} le ${dateLisible(s.etat.pointage.date)}` : "Jamais pointé"}
+        />
+        <Chiffre
+          label="Épuisement"
+          valeur={s.etat.epuisement ? dateLisible(s.etat.epuisement, { day: "numeric", month: "long" }) : "—"}
+          detail={echeanceLisible(s.etat, jour)}
+        />
+        <Chiffre
+          label="Renouveler à partir du"
+          valeur={s.etat.alerteLe ? dateLisible(s.etat.alerteLe, { day: "numeric", month: "long" }) : s.etat.sousSeuil ? "Maintenant" : "—"}
+          detail={`${s.etat.delai} jours avant l'épuisement${s.seuil !== null ? ` · seuil : ${quantiteAvecUnite(s.seuil, s.unite)}` : ""}`}
+        />
+      </SimpleGrid>
+
+      <Card withBorder>
+        <Title order={4} mb="xs">
+          Qui y puise
+        </Title>
+        {enCours.length === 0 ? (
+          <Text size="sm" c="dimmed">
+            Aucun traitement en cours.
+          </Text>
+        ) : (
+          <Stack gap={6}>
+            {enCours.map((t) => (
+              <Group key={t.id} justify="space-between">
+                <Text size="sm">
+                  <b>{t.prenom}</b> : {posologieLisible(t.posologie)}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {t.fin ? `jusqu'au ${dateLisible(t.fin)}` : `depuis le ${dateLisible(t.debut)}`}
+                  {t.delaiAlerte !== null ? ` · alerte ${t.delaiAlerte} j avant` : ""}
+                </Text>
+              </Group>
+            ))}
+          </Stack>
+        )}
+      </Card>
+
+      <Card withBorder>
+        <Title order={4} mb="xs">
+          Pointages
+        </Title>
+        {s.pointages.length === 0 ? (
+          <Text size="sm" c="dimmed">
+            Aucun pointage : comptez ce qui reste, un soir après les prises.
+          </Text>
+        ) : (
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Le soir du</Table.Th>
+                <Table.Th>Compté</Table.Th>
+                {!telephone && <Table.Th>Prévu</Table.Th>}
+                <Table.Th>Écart</Table.Th>
+                {!telephone && <Table.Th>Note</Table.Th>}
+                {estAdmin() && <Table.Th w={40} />}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {s.pointages.map((p) => {
+                const ecart = p.attendu === null ? null : p.quantite - p.attendu;
+                return (
+                  <Table.Tr key={p.id}>
+                    <Table.Td>{dateLisible(p.date)}</Table.Td>
+                    <Table.Td fw={500}>{quantiteLisible(p.quantite)}</Table.Td>
+                    {!telephone && <Table.Td c="dimmed">{p.attendu === null ? "—" : quantiteLisible(p.attendu)}</Table.Td>}
+                    <Table.Td c={ecart === null || ecart === 0 ? "dimmed" : ecart < 0 ? "red.7" : "marque.7"}>
+                      {ecart === null ? "—" : ecart === 0 ? "=" : `${ecart > 0 ? "+" : ""}${quantiteLisible(ecart)}`}
+                    </Table.Td>
+                    {!telephone && (
+                      <Table.Td>
+                        <Text size="xs" c="dimmed">
+                          {[p.note, p.creePar].filter(Boolean).join(" · ")}
+                        </Text>
+                      </Table.Td>
+                    )}
+                    {estAdmin() && (
+                      <Table.Td>
+                        <Menu position="bottom-end">
+                          <Menu.Target>
+                            <ActionIcon variant="subtle" color="gray" aria-label="Actions">
+                              <IconDots size={16} />
+                            </ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown>
+                            <Menu.Item leftSection={<IconPencil size={14} />} onClick={() => setCorrection(p)}>
+                              Corriger
+                            </Menu.Item>
+                            <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => supprimer(p)}>
+                              Supprimer
+                            </Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                      </Table.Td>
+                    )}
+                  </Table.Tr>
+                );
+              })}
+            </Table.Tbody>
+          </Table>
+        )}
+        <Text size="xs" c="dimmed" mt="xs">
+          Écart : ce qui a été compté moins ce que le calcul prévoyait d'après le pointage précédent (négatif : prise en trop, boîte perdue ; positif :
+          oubli de prise, nouvelles boîtes).
+        </Text>
+      </Card>
+      {estAdmin() && !telephone && <Historique id={s.id} />}
+      <ModalCorrection key={correction?.id} pointage={correction} unite={s.unite} onClose={() => setCorrection(null)} />
+    </Stack>
+  );
+}
