@@ -53,7 +53,16 @@ export function ouvrirComptes(chemin: string) {
       expire_le INTEGER NOT NULL,
       utilise_le INTEGER
     );
-    -- Réglages de l'installation (état de la dernière sauvegarde automatique…).
+    -- Notifications Web Push : un abonnement par appareil (serveur/push.ts).
+    CREATE TABLE IF NOT EXISTS abonnement_push (
+      endpoint TEXT PRIMARY KEY,
+      utilisateur_id TEXT NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      appareil TEXT,
+      cree_le TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    -- Réglages de l'installation (état de la dernière sauvegarde automatique, clés VAPID…).
     CREATE TABLE IF NOT EXISTS reglage (
       cle TEXT PRIMARY KEY,
       valeur TEXT NOT NULL

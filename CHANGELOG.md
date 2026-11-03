@@ -9,6 +9,8 @@
   posologie » pour un médicament pris si besoin), avec un délai d'alerte propre si besoin.
 - **À renouveler** (accueil) : par personne, ce qu'il faut demander au médecin, avec l'échéance ; stocks jamais pointés,
   prochaines échéances ; imprimable.
+- **Notifications sur le téléphone** : le jour où un médicament entre dans son délai d'alerte, puis une fois par
+  semaine tant qu'il n'est pas renouvelé (à activer dans le menu du compte, appareil par appareil).
 - **Stocks** : partagés (l'armoire commune) ou propres à une personne ; pour chacun, le stock estimé ce soir, la date
   d'épuisement et le moment de renouveler (délai d'alerte, ou seuil du médicament). Fiche d'un stock : qui y puise, ses
   pointages avec l'écart au calcul, son historique.

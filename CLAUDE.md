@@ -38,4 +38,5 @@ bun scripts/renommer.ts "Nom" compte/depot "Description"   # une fois, dans une 
 
 ## État
 
-Étape 5 du plan de la V1 (`docs/conception.md`) : notifications. Étapes 2 à 4 faites.
+Étapes 1 à 5 du plan de la V1 faites (`docs/conception.md`). Reste l'étape 6 : publication de la 1.0 (étiquette à
+pousser avec l'accord de l'utilisateur), et le report dans Fundamentum des améliorations du socle (module push…).

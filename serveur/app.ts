@@ -11,6 +11,7 @@ import { baseCourante } from "./base";
 import { diffuser, fluxEvenements } from "./evenements";
 import { cibleDesArguments, instantane, journaliser, lireJournal } from "./journal";
 import { etatMiseAJour } from "./miseAJour";
+import { abonner, abonnementsDe, clePublique, desabonner, envoyerATous } from "./push";
 import { cheminSauvegarde, etatSauvegardeAuto, listeSauvegardes, nomSauvegardeValide, sauvegardeDeNuit } from "./sauvegardeAuto";
 import { SAUVEGARDES_CONSERVEES } from "./config";
 import { contexteRequete } from "./tracabilite";
@@ -122,6 +123,39 @@ export function creerApp() {
         // Les fichiers ne changent jamais (nom unique) : cache long, mais privé.
         set.headers["cache-control"] = "private, max-age=31536000, immutable";
         return Bun.file(chemin);
+      })
+
+      // --- Notifications sur téléphone (Web Push) : chaque compte abonne ses appareils
+      .get("/api/push", async ({ utilisateur }) => {
+        const u = exiger(utilisateur, "lecture");
+        return { cle: await clePublique(), appareils: abonnementsDe(u.id).map((a) => ({ endpoint: a.endpoint, appareil: a.appareil })) };
+      })
+      .post(
+        "/api/push/abonnement",
+        ({ utilisateur, body }) => {
+          const u = exiger(utilisateur, "lecture");
+          try {
+            abonner(u.id, { endpoint: body.endpoint, p256dh: body.keys.p256dh, auth: body.keys.auth, appareil: body.appareil });
+          } catch (e) {
+            throw new ErreurMetier((e as Error).message);
+          }
+          return { ok: true };
+        },
+        { body: t.Object({ endpoint: t.String(), keys: t.Object({ p256dh: t.String(), auth: t.String() }), appareil: t.Optional(t.String()) }) },
+      )
+      .post(
+        "/api/push/desabonnement",
+        ({ utilisateur, body }) => {
+          const u = exiger(utilisateur, "lecture");
+          if (abonnementsDe(u.id).some((a) => a.endpoint === body.endpoint)) desabonner(body.endpoint);
+          return { ok: true };
+        },
+        { body: t.Object({ endpoint: t.String() }) },
+      )
+      .post("/api/push/essai", async ({ utilisateur }) => {
+        const u = exiger(utilisateur, "lecture");
+        const envoyes = await envoyerATous({ titre: "Notifications activées", texte: "Vous serez prévenu ici quand un médicament sera à renouveler.", url: "/" }, u.id);
+        return { envoyes };
       })
 
       // --- Mise à jour en direct et journal des modifications

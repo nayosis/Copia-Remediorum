@@ -3,7 +3,7 @@ import {
   Alert, AppShell, Badge, Box, Burger, Button, Divider, Drawer, Group, Menu, Modal, NavLink, PasswordInput, Stack, Text, UnstyledButton, SegmentedControl, useMantineColorScheme,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconBrandGithub, IconChevronUp, IconDatabaseExport, IconDots, IconHistory, IconKey, IconLayoutDashboard, IconLogout, IconAdjustmentsHorizontal, IconBoxSeam, IconClipboardList, IconPill, IconPlus, IconUserCog } from "@tabler/icons-react";
+import { IconBrandGithub, IconChevronUp, IconDatabaseExport, IconDots, IconHistory, IconKey, IconLayoutDashboard, IconLogout, IconAdjustmentsHorizontal, IconBell, IconBoxSeam, IconClipboardList, IconPill, IconPlus, IconUserCog } from "@tabler/icons-react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { appelApi } from "../lib/rpc";
 import { deconnexion, estAdmin, LIBELLES_ROLES, peutEcrire, utilisateur } from "../lib/session";
@@ -13,6 +13,7 @@ import { useEcran } from "../lib/ecran";
 import { configuration } from "../lib/configuration";
 import { DEPOT_URL } from "../lib/versions";
 import { BadgeMiseAJour } from "./MiseAJour";
+import { ModalNotifications } from "./Notifications";
 import { Logo } from "./Logo";
 
 /** `court` : libellé de la barre du bas, sur téléphone ; `barre` : y figure (le reste est dans « Plus »). */
@@ -98,6 +99,7 @@ function ChoixTheme() {
 function MenuCompte() {
   const moi = utilisateur();
   const [mdp, setMdp] = useState(false);
+  const [notif, setNotif] = useState(false);
   if (!moi) return null;
   return (
     <>
@@ -131,6 +133,9 @@ function MenuCompte() {
           </Menu.Item>
           <ChoixTheme />
           <Menu.Divider />
+          <Menu.Item leftSection={<IconBell size={14} />} onClick={() => setNotif(true)}>
+            Notifications sur cet appareil
+          </Menu.Item>
           <Menu.Item leftSection={<IconKey size={14} />} onClick={() => setMdp(true)}>
             Changer de mot de passe
           </Menu.Item>
@@ -140,6 +145,7 @@ function MenuCompte() {
         </Menu.Dropdown>
       </Menu>
       <ModalMotDePasse opened={mdp} onClose={() => setMdp(false)} />
+      <ModalNotifications opened={notif} onClose={() => setNotif(false)} />
     </>
   );
 }

@@ -46,3 +46,6 @@ function libelleStock(base: Database, id: string) {
     .get(id);
   return l ? `${l.nom} — ${l.prenom ?? "partagé"}` : null;
 }
+
+/** Notifications du jour (serveur/push.ts les envoie une fois par jour) : propre à l'application. */
+export { notificationsDuJour } from "../src/data/_notifications";

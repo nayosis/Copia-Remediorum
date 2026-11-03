@@ -93,8 +93,15 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 - **Oui** (décidé), avec le module Web Push du socle (skill `architecture`, § 10) : « Kardégic de Jeanne : épuisé vers
   le 28 nov., à renouveler », **le jour où l'alerte commence, puis une fois par semaine** tant qu'aucun pointage ne
   repousse la date d'épuisement au-delà du délai d'alerte.
-- Chaque compte active les notifications sur son téléphone (application installée sur l'écran d'accueil, HTTPS).
-- Module à écrire pour cette application, puis à reporter dans le modèle Fundamentum.
+- Chaque compte active les notifications **appareil par appareil** (menu du compte › « Notifications sur cet
+  appareil » ; tout rôle, lecture compris). HTTPS obligatoire ; sur iPhone, l'application doit être ajoutée à l'écran
+  d'accueil (iOS 16.4+).
+- Envoi **une fois par jour, à partir de 9 h** (fuseau de l'installation), à tous les appareils abonnés. Plusieurs
+  stocks dus le même jour : **une seule notification** qui les liste ; un seul : son nom et la date, et un toucher ouvre
+  sa fiche.
+- Technique (module du socle, `serveur/push.ts`) : Web Push sans service ni dépendance externe, clés VAPID créées au
+  premier lancement (dans `comptes.db`), chiffrement aes128gcm (RFC 8291, vérifié sur l'exemple de la RFC). Ce qu'il
+  faut envoyer est propre à l'application (`src/data/_notifications.ts`). À reporter dans le modèle Fundamentum.
 
 ## Hors V1
 
@@ -112,5 +119,5 @@ Personne ── Traitement (0..n) ──┬─ Médicament
    et de la date d'épuisement (fonctions pures, très testées : rythmes, quarts, dates de fin, stock partagé).
 4. « À renouveler » (fait) : la page (accueil de l'application), par personne, et la fiche de chaque stock (pointages,
    consommation, historique).
-5. Notifications : module Web Push (abonnement par compte, tâche quotidienne du serveur, rappel hebdomadaire).
+5. Notifications (fait) : module Web Push (abonnement par compte, tâche quotidienne du serveur, rappel hebdomadaire).
 6. Publication : version 1.0, image ghcr.io, déploiement personnel.

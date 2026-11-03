@@ -17,12 +17,15 @@ import { theme } from "./theme";
 import { queryClient } from "./lib/query";
 import { chargerSession } from "./lib/session";
 import { chargerConfiguration } from "./lib/configuration";
+import { inscrireServiceWorker } from "./components/Notifications";
 
 // Le compte connecté (et donc ses droits) est connu avant le premier affichage.
 await Promise.all([
   chargerSession().catch((e) => console.error("Session illisible", e)),
   chargerConfiguration().catch((e) => console.error("Configuration illisible", e)),
 ]);
+
+inscrireServiceWorker();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

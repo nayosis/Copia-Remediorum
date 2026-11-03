@@ -3,6 +3,8 @@ import { ouvrirBase, verrouillerDossier } from "./base";
 import { installerSuperAdmin, ouvrirComptes } from "./comptes";
 import { BASE_COMPTES, BASE_DONNEES, DOSSIER_DONNEES, DOSSIER_MIGRATIONS, FUSEAU, PORT, preparerDossiers } from "./config";
 import { planifierSauvegardes } from "./sauvegardeAuto";
+import { planifierNotifications } from "./push";
+import { notificationsDuJour } from "./modele";
 import { definirFuseau } from "../src/lib/dates";
 
 definirFuseau(FUSEAU);
@@ -19,3 +21,6 @@ console.log(`Copia Remediorum : http://localhost:${PORT} (données : ${DOSSIER_D
 
 // Sauvegarde complète chaque nuit dans data/sauvegardes.
 planifierSauvegardes();
+
+// Notifications sur téléphone (Web Push), une fois par jour.
+planifierNotifications(notificationsDuJour);
