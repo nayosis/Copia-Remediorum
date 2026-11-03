@@ -1,6 +1,9 @@
 # Journal des versions
 
-## Non publié
+## v0.1.0 · Première version
+
+Suivi du stock de médicaments de la famille : posologies, pointages, date d'épuisement, page « À renouveler » et
+notifications sur le téléphone.
 
 **Nouveau**
 - Socle repris du modèle Fundamentum 0.1.0 : comptes, journal, sauvegardes, Docker. Couleur vert sauge, logo gélule.
