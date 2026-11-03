@@ -67,10 +67,10 @@ jobs:
     steps:
       - uses: softprops/action-gh-release@v3
         with:
-          name: Fundamentum ${{ github.ref_name }}
+          name: Copia Remediorum ${{ github.ref_name }}
           generate_release_notes: true
           body: |
             ## Installer ou mettre à jour
 
-            Sur le serveur, dans le dossier de Fundamentum : `docker compose pull && docker compose up -d` — image
+            Sur le serveur, dans le dossier de Copia Remediorum : `docker compose pull && docker compose up -d` — image
             `ghcr.io/${{ github.repository }}:${{ github.ref_name }}`.

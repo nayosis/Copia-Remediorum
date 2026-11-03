@@ -163,7 +163,7 @@ export const supprimerUtilisateur = (id: string) => base.query("DELETE FROM util
 export const nbUtilisateurs = () => base.query<{ n: number }, []>("SELECT count(*) AS n FROM utilisateur").get()!.n;
 
 /**
- * Premier lancement, sans aucun compte : la personne qui installe Fundamentum crée le super admin.
+ * Premier lancement, sans aucun compte : la personne qui installe Copia Remediorum crée le super admin.
  * Refusé dès qu'un compte existe.
  */
 export async function installerPremierAdmin(email: string, mdp: string) {
@@ -174,7 +174,7 @@ export async function installerPremierAdmin(email: string, mdp: string) {
   const id = crypto.randomUUID();
   // Vérification et création d'un seul tenant : deux installations simultanées ne créent pas deux comptes.
   base.transaction(() => {
-    if (nbUtilisateurs() > 0) throw new Error("Fundamentum est déjà installé.");
+    if (nbUtilisateurs() > 0) throw new Error("Copia Remediorum est déjà installé.");
     base.query("INSERT INTO utilisateur (id, email, role, mot_de_passe, super) VALUES (?, ?, 'admin', ?, 1)").run(id, e, hache);
   })();
   return utilisateurParId(id)!;

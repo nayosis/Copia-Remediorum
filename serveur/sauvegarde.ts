@@ -23,7 +23,7 @@ const BASE = "donnees.db";
 const FICHIERS = "fichiers/";
 
 export type Manifeste = {
-  application: "Fundamentum";
+  application: "Copia Remediorum";
   format: 1;
   creeLe: string;
   motif: string;
@@ -35,12 +35,12 @@ export type Manifeste = {
 export function manifeste(base: Database, motif: string): Manifeste {
   const compteurs = Object.fromEntries(Object.entries(COMPTEURS).map(([libelle, sql]) => [libelle, Number(base.query(sql).values()[0]?.[0] ?? 0)]));
   const migrations = base.query("select nom from __migrations order by nom").values().map((r) => r[0] as string);
-  return { application: "Fundamentum", format: 1, creeLe: new Date().toISOString(), motif, migrations, compteurs };
+  return { application: "Copia Remediorum", format: 1, creeLe: new Date().toISOString(), motif, migrations, compteurs };
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
 export const nomSauvegarde = (d = new Date()) =>
-  `fundamentum-sauvegarde-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}.zip`;
+  `copia-remediorum-sauvegarde-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}.zip`;
 
 /**
  * Lecture d'un fichier par blocs, fermé dès la fin : sous Windows, un fichier resté ouvert
@@ -136,10 +136,10 @@ async function extraire(zip: Blob, dossier: string) {
   if (erreur) throw new Error(`Archive illisible : ${String(erreur)}`);
 }
 
-/** Vérifie une sauvegarde extraite : manifeste Fundamentum, base SQLite intègre contenant les tables attendues. */
+/** Vérifie une sauvegarde extraite : manifeste Copia Remediorum, base SQLite intègre contenant les tables attendues. */
 function verifier(dossier: string): Partial<Manifeste> {
   const chemin = join(dossier, MANIFESTE);
-  if (!existsSync(chemin)) throw new Error("Ce fichier n'est pas une sauvegarde Fundamentum (manifest.json absent).");
+  if (!existsSync(chemin)) throw new Error("Ce fichier n'est pas une sauvegarde Copia Remediorum (manifest.json absent).");
   let m: Partial<Manifeste>;
   try {
     m = JSON.parse(readFileSync(chemin, "utf8"));
@@ -154,7 +154,7 @@ function verifier(dossier: string): Partial<Manifeste> {
     if (integrite !== "ok") throw new Error(`Base de la sauvegarde endommagée (${integrite}).`);
     const tables = new Set(base.query("select name from sqlite_master where type = 'table'").values().map((r) => r[0]));
     for (const t of TABLES_ATTENDUES) {
-      if (!tables.has(t)) throw new Error("La sauvegarde ne contient pas une base Fundamentum.");
+      if (!tables.has(t)) throw new Error("La sauvegarde ne contient pas une base Copia Remediorum.");
     }
   } finally {
     base.close();
@@ -185,7 +185,7 @@ export async function restaurer(zip: Blob) {
         for (const suffixe of ["-wal", "-shm"]) if (existsSync(BASE_DONNEES + suffixe)) unlinkSync(BASE_DONNEES + suffixe);
       } catch (e) {
         if ((e as { code?: string }).code !== "EBUSY") throw e;
-        throw new Error("La base est encore ouverte par un autre programme (un autre serveur Fundamentum ?) : rien n'a été modifié.");
+        throw new Error("La base est encore ouverte par un autre programme (un autre serveur Copia Remediorum ?) : rien n'a été modifié.");
       }
       remplacer(join(dossier, BASE), BASE_DONNEES, `${BASE_DONNEES}.avant-restauration`);
     } finally {

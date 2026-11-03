@@ -15,7 +15,7 @@ ouvrirComptes(BASE_COMPTES);
 await installerSuperAdmin(process.env.SUPER_ADMIN_EMAIL, process.env.SUPER_ADMIN_MOT_DE_PASSE);
 
 creerApp().listen(PORT);
-console.log(`Fundamentum : http://localhost:${PORT} (données : ${DOSSIER_DONNEES})`);
+console.log(`Copia Remediorum : http://localhost:${PORT} (données : ${DOSSIER_DONNEES})`);
 
 // Sauvegarde complète chaque nuit dans data/sauvegardes.
 planifierSauvegardes();

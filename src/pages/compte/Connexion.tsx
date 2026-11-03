@@ -10,7 +10,7 @@ import { DEPOT_URL } from "../../lib/versions";
 function Signature() {
   return (
     <Text size="xs" c="dimmed" ta="center">
-      Fundamentum {configuration().version && `${configuration().version} `}— logiciel libre ·{" "}
+      Copia Remediorum {configuration().version && `${configuration().version} `}— logiciel libre ·{" "}
       <Anchor href={DEPOT_URL} target="_blank" rel="noopener noreferrer" size="xs">
         GitHub
       </Anchor>
@@ -23,7 +23,7 @@ export function Connexion() {
   return configuration().installe ? <FormConnexion /> : <Installation />;
 }
 
-/** Premier lancement : la personne qui installe Fundamentum crée son compte (administrateur principal). */
+/** Premier lancement : la personne qui installe Copia Remediorum crée son compte (administrateur principal). */
 function Installation() {
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
@@ -54,7 +54,7 @@ function Installation() {
             <div>
               <Logo taille={40} />
               <Title order={2} mt="sm">
-                Bienvenue dans Fundamentum
+                Bienvenue dans Copia Remediorum
               </Title>
               <Text size="sm" c="dimmed">
                 Premier lancement : créez votre compte. Il sera l'administrateur principal ; vous pourrez ensuite inviter
@@ -118,7 +118,7 @@ function FormConnexion() {
             <div>
               <Logo taille={40} />
               <Title order={2} mt="sm">
-                Fundamentum
+                Copia Remediorum
               </Title>
               <Text size="sm" c="dimmed">
                 Accès réservé.

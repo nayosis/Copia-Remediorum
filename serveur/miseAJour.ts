@@ -17,7 +17,7 @@ export async function derniereVersion(lire: typeof fetch = fetch): Promise<Derni
   if (cache && cache.expire > Date.now()) return cache.derniere;
   try {
     const r = await lire(API, {
-      headers: { accept: "application/vnd.github+json", "user-agent": `Fundamentum/${VERSION}` },
+      headers: { accept: "application/vnd.github+json", "user-agent": `Copia Remediorum/${VERSION}` },
       signal: AbortSignal.timeout(5000),
     });
     if (!r.ok) throw new Error(`GitHub : ${r.status}`);

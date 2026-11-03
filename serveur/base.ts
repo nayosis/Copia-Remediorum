@@ -50,7 +50,7 @@ export function verrouillerDossier(dossier: string) {
       if (!String((e as { code?: string }).code).startsWith("SQLITE_BUSY")) throw e;
       if (essai >= 50) {
         v.close();
-        throw new Error(`Un autre serveur Fundamentum utilise déjà ce dossier de données (${dossier}) : arrêtez-le d'abord.`);
+        throw new Error(`Un autre serveur Copia Remediorum utilise déjà ce dossier de données (${dossier}) : arrêtez-le d'abord.`);
       }
       Bun.sleepSync(100);
     }

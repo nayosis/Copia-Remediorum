@@ -50,7 +50,7 @@ export function Lien() {
           <form onSubmit={valider}>
             <Stack>
               <div>
-                <Title order={3}>{data.type === "creation" ? "Bienvenue sur Fundamentum" : "Nouveau mot de passe"}</Title>
+                <Title order={3}>{data.type === "creation" ? "Bienvenue sur Copia Remediorum" : "Nouveau mot de passe"}</Title>
                 <Text size="sm" c="dimmed">
                   {data.type === "creation" ? "Choisissez le mot de passe de votre compte" : "Choisissez un nouveau mot de passe pour"} <b>{data.email}</b>.
                 </Text>

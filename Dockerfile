@@ -1,4 +1,4 @@
-# Fundamentum : serveur Bun + interface compilée, données dans le volume /data.
+# Copia Remediorum : serveur Bun + interface compilée, données dans le volume /data.
 
 # --- Construction de l'interface
 FROM oven/bun:1.3 AS construction
@@ -11,9 +11,9 @@ RUN bun run build
 # --- Image finale
 FROM oven/bun:1.3-slim
 ARG VERSION=dev
-LABEL org.opencontainers.image.title="Fundamentum" \
-      org.opencontainers.image.description="Socle d'application familiale auto-hébergée" \
-      org.opencontainers.image.source="https://github.com/nayosis/fundamentum" \
+LABEL org.opencontainers.image.title="Copia Remediorum" \
+      org.opencontainers.image.description="La réserve des médicaments de la famille : savoir quand faire renouveler une ordonnance." \
+      org.opencontainers.image.source="https://github.com/nayosis/copia-remediorum" \
       org.opencontainers.image.licenses="AGPL-3.0-or-later" \
       org.opencontainers.image.version=$VERSION
 WORKDIR /app

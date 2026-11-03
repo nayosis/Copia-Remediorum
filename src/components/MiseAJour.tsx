@@ -20,7 +20,7 @@ export function InstructionsMiseAJour({ installation }: { installation: Installa
   if (installation === "docker")
     return (
       <Text size="sm">
-        Sur le serveur, dans le dossier de Fundamentum : <Code>docker compose pull && docker compose up -d</Code>. Les données ne
+        Sur le serveur, dans le dossier de Copia Remediorum : <Code>docker compose pull && docker compose up -d</Code>. Les données ne
         sont pas touchées.
       </Text>
     );
@@ -31,7 +31,7 @@ export function InstructionsMiseAJour({ installation }: { installation: Installa
   );
 }
 
-const CLE_IGNOREE = "fundamentum.miseAJour.ignoree";
+const CLE_IGNOREE = "copia-remediorum.miseAJour.ignoree";
 const lireIgnoree = () => {
   try {
     return localStorage.getItem(CLE_IGNOREE);

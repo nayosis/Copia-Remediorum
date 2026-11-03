@@ -20,7 +20,7 @@ import { fluxSauvegarde, nomSauvegarde } from "./sauvegarde";
 export const HEURE_SAUVEGARDE = 3;
 const ORPHELINS_APRES_JOURS = 7;
 
-const NOM = /^fundamentum-sauvegarde-\d{4}-\d{2}-\d{2}_\d{2}h\d{2}(-\d+)?\.zip$/;
+const NOM = /^copia-remediorum-sauvegarde-\d{4}-\d{2}-\d{2}_\d{2}h\d{2}(-\d+)?\.zip$/;
 export const nomSauvegardeValide = (nom: string) => NOM.test(nom);
 export const cheminSauvegarde = (nom: string) => {
   if (!nomSauvegardeValide(nom)) throw new Error(`Nom de sauvegarde invalide : ${nom}`);

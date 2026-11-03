@@ -1,5 +1,5 @@
 /** Dépôt du projet : code source, nouvelles versions, signalement des problèmes. */
-export const DEPOT_URL = "https://github.com/nayosis/fundamentum";
+export const DEPOT_URL = "https://github.com/nayosis/copia-remediorum";
 
 const morceaux = (v: string) => {
   const [base, pre] = v.trim().replace(/^v/i, "").split("-", 2);
@@ -19,7 +19,7 @@ export function comparerVersions(a: string, b: string) {
   return x.pre < y.pre ? -1 : 1;
 }
 
-/** Comment Fundamentum est installé : détermine la façon de le mettre à jour. */
+/** Comment Copia Remediorum est installé : détermine la façon de le mettre à jour. */
 export type Installation = "docker" | "source";
 
 /** Réponse de /api/mise-a-jour. */

@@ -10,7 +10,7 @@ import {
 import { VERSION } from "./config";
 import { ErreurMetier } from "./erreurs";
 
-export const COOKIE_SESSION = "fundamentum_session";
+export const COOKIE_SESSION = "copia-remediorum_session";
 
 /** Écriture < admin. Le super admin a tous les droits. */
 const NIVEAU: Record<Role, number> = { lecture: 0, ecriture: 1, admin: 2 };
@@ -101,7 +101,7 @@ export const routesAuth = new Elysia()
       if (tentativesEpuisees(cle)) throw new ErreurMetier("Trop de tentatives : réessayez dans quelques minutes.", 429);
       if (nbUtilisateurs() > 0) {
         noterEchec(cle);
-        throw new ErreurMetier("Fundamentum est déjà installé.", 403);
+        throw new ErreurMetier("Copia Remediorum est déjà installé.", 403);
       }
       let u: Utilisateur;
       try {

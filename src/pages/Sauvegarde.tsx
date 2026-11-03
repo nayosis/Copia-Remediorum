@@ -216,7 +216,7 @@ export function Sauvegarde() {
               <Text fw={600}>Restaurer une sauvegarde</Text>
             </Group>
             <List size="sm" spacing={4}>
-              <List.Item>Remplace toutes les données par celles du ZIP (sauvegarde de cette installation ou d'une autre installation de Fundamentum).</List.Item>
+              <List.Item>Remplace toutes les données par celles du ZIP (sauvegarde de cette installation ou d'une autre installation de Copia Remediorum).</List.Item>
               <List.Item>Les comptes et mots de passe ne changent pas.</List.Item>
               <List.Item>Pour changer de serveur : télécharger la sauvegarde sur l'ancien, puis la restaurer ici.</List.Item>
             </List>

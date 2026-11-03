@@ -29,8 +29,8 @@ export class Redacteur {
   static async creer(titreDocument: string) {
     const doc = await PDFDocument.create();
     doc.setTitle(titreDocument);
-    doc.setCreator("Fundamentum");
-    doc.setProducer("Fundamentum");
+    doc.setCreator("Copia Remediorum");
+    doc.setProducer("Copia Remediorum");
     return new Redacteur(doc, await doc.embedFont(StandardFonts.Helvetica), await doc.embedFont(StandardFonts.HelveticaBold), titreDocument);
   }
 
@@ -233,7 +233,7 @@ export class Redacteur {
   /** Pied de page sur toutes les pages, puis les octets. */
   async terminer() {
     const toutes = this.doc.getPages();
-    const pied = this.propre(`Fundamentum · ${this.titreDocument}`);
+    const pied = this.propre(`Copia Remediorum · ${this.titreDocument}`);
     toutes.forEach((p, i) => {
       const n = `${i + 1} / ${toutes.length}`;
       p.drawText(pied, { x: 30, y: 18, size: 7, font: this.police, color: GRIS });

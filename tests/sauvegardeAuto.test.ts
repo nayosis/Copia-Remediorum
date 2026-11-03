@@ -30,26 +30,26 @@ describe("sauvegarde automatique", () => {
     const quand = new Date(2026, 9, 28, 3, 0);
     // Celle de la nuit et un « Sauvegarder maintenant » au même moment.
     const [a, b] = await Promise.all([sauvegarder("nuit", quand), sauvegarder("manuelle", quand)]);
-    expect(a.nom).toBe("fundamentum-sauvegarde-2026-10-28_03h00.zip");
-    expect(b.nom).toBe("fundamentum-sauvegarde-2026-10-28_03h00-2.zip");
+    expect(a.nom).toBe("copia-remediorum-sauvegarde-2026-10-28_03h00.zip");
+    expect(b.nom).toBe("copia-remediorum-sauvegarde-2026-10-28_03h00-2.zip");
     const contenu = unzipSync(new Uint8Array(await Bun.file(join(DOSSIER_SAUVEGARDES, a.nom)).arrayBuffer()));
-    expect(JSON.parse(new TextDecoder().decode(contenu["manifest.json"]))).toMatchObject({ application: "Fundamentum", motif: "nuit", compteurs: { Notes: nb } });
+    expect(JSON.parse(new TextDecoder().decode(contenu["manifest.json"]))).toMatchObject({ application: "Copia Remediorum", motif: "nuit", compteurs: { Notes: nb } });
     expect(readdirSync(DOSSIER_SAUVEGARDES).some((f) => f.endsWith(".partiel"))).toBe(false);
   });
 
   test("rotation : seules les plus récentes sont gardées", () => {
     vider();
     for (let i = 1; i <= 5; i++) {
-      const nom = `fundamentum-sauvegarde-2026-10-0${i}_03h00.zip`;
+      const nom = `copia-remediorum-sauvegarde-2026-10-0${i}_03h00.zip`;
       writeFileSync(join(DOSSIER_SAUVEGARDES, nom), "zip");
       utimesSync(join(DOSSIER_SAUVEGARDES, nom), ilYA(10 - i), ilYA(10 - i));
     }
     writeFileSync(join(DOSSIER_SAUVEGARDES, "a-moi.txt"), "ne pas toucher");
-    expect(rotation(3).sort()).toEqual(["fundamentum-sauvegarde-2026-10-01_03h00.zip", "fundamentum-sauvegarde-2026-10-02_03h00.zip"]);
+    expect(rotation(3).sort()).toEqual(["copia-remediorum-sauvegarde-2026-10-01_03h00.zip", "copia-remediorum-sauvegarde-2026-10-02_03h00.zip"]);
     expect(listeSauvegardes().map((x) => x.nom)).toEqual([
-      "fundamentum-sauvegarde-2026-10-05_03h00.zip",
-      "fundamentum-sauvegarde-2026-10-04_03h00.zip",
-      "fundamentum-sauvegarde-2026-10-03_03h00.zip",
+      "copia-remediorum-sauvegarde-2026-10-05_03h00.zip",
+      "copia-remediorum-sauvegarde-2026-10-04_03h00.zip",
+      "copia-remediorum-sauvegarde-2026-10-03_03h00.zip",
     ]);
     expect(existsSync(join(DOSSIER_SAUVEGARDES, "a-moi.txt"))).toBe(true);
   });

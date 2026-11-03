@@ -1,10 +1,10 @@
 {
-  "name": "fundamentum",
+  "name": "copia-remediorum",
   "private": true,
-  "version": "0.1.0",
-  "description": "Fundamentum : Socle d'application familiale auto-hébergée",
+  "version": "0.0.1",
+  "description": "Copia Remediorum : la réserve des médicaments de la famille : savoir quand faire renouveler une ordonnance.",
   "license": "AGPL-3.0-or-later",
-  "repository": "github:nayosis/fundamentum",
+  "repository": "github:nayosis/copia-remediorum",
   "type": "module",
   "scripts": {
     "dev": "bun serveur/dev.ts",

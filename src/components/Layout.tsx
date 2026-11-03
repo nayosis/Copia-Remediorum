@@ -147,7 +147,7 @@ function Marque() {
     <Group gap={8} wrap="nowrap">
       <Logo taille={26} />
       <Text fw={600} ff="heading" size="lg">
-        Fundamentum
+        Copia Remediorum
       </Text>
     </Group>
   );
@@ -200,7 +200,7 @@ function BarreBas({ chemin, onPlus }: { chemin: string; onPlus: () => void }) {
                 mt={-20}
                 bg="marque.6"
                 c="white"
-                style={{ borderRadius: 28, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(69, 114, 153, 0.35)" }}
+                style={{ borderRadius: 28, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(63, 138, 106, 0.35)" }}
               >
                 <IconPlus size={28} />
               </Box>

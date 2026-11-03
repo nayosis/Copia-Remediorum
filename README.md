@@ -2,7 +2,7 @@
   <img src="public/icone.svg" alt="" width="96" height="96">
 </p>
 
-<h1 align="center">Fundamentum</h1>
+<h1 align="center">Copia Remediorum</h1>
 
 <p align="center">
   <em>La fondation</em> — socle d'application familiale auto-hébergée, logiciel libre.
@@ -70,8 +70,8 @@ Bun + Elysia + SQLite (Drizzle) côté serveur, React + Mantine + TanStack côt�
 ## Installer (Docker)
 
 ```bash
-mkdir fundamentum && cd fundamentum
-curl -O https://raw.githubusercontent.com/nayosis/fundamentum/main/docker-compose.yml
+mkdir copia-remediorum && cd copia-remediorum
+curl -O https://raw.githubusercontent.com/nayosis/copia-remediorum/main/docker-compose.yml
 docker compose up -d
 ```
 

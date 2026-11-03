@@ -63,7 +63,7 @@ body,
   --t-fond-doux: var(--mantine-color-dark-6);
   --t-fond-menu: var(--mantine-color-dark-8);
   --t-surface: var(--mantine-color-dark-7);
-  --t-fond-accent: rgba(83, 131, 169, 0.16);
+  --t-fond-accent: rgba(76, 159, 124, 0.16);
   --t-fond-alerte: rgba(247, 103, 7, 0.16);
 }
 

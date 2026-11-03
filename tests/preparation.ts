@@ -3,4 +3,4 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-process.env.DOSSIER_DONNEES = mkdtempSync(join(tmpdir(), "fundamentum-tests-"));
+process.env.DOSSIER_DONNEES = mkdtempSync(join(tmpdir(), "copia-remediorum-tests-"));

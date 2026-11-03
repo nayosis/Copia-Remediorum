@@ -34,7 +34,7 @@ const cookie = await connexion();
 const telecharger = async () => {
   const r = await app.handle(new Request("http://local/api/sauvegarde", { headers: { cookie } }));
   expect(r.status).toBe(200);
-  expect(r.headers.get("content-disposition")).toContain("fundamentum-sauvegarde-");
+  expect(r.headers.get("content-disposition")).toContain("copia-remediorum-sauvegarde-");
   return new Uint8Array(await r.arrayBuffer());
 };
 const restaurer = (zip: Uint8Array) => {
@@ -52,7 +52,7 @@ describe("sauvegarde", () => {
     const contenu = unzipSync(zip);
     // Le dossier de données est partagé par tous les fichiers de tests : d'autres fichiers peuvent s'y trouver.
     expect(Object.keys(contenu)).toEqual(expect.arrayContaining(["donnees.db", "fichiers/11111111-aaaa.pdf", "manifest.json"]));
-    expect(JSON.parse(new TextDecoder().decode(contenu["manifest.json"]))).toMatchObject({ application: "Fundamentum", format: 1, compteurs: { Notes: avant } });
+    expect(JSON.parse(new TextDecoder().decode(contenu["manifest.json"]))).toMatchObject({ application: "Copia Remediorum", format: 1, compteurs: { Notes: avant } });
 
     await notes.creerNote({ titre: "Après la sauvegarde" });
     writeFileSync(join(DOSSIER_FICHIERS, "22222222-bbbb.pdf"), "autre");

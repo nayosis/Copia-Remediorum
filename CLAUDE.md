@@ -1,7 +1,7 @@
-# Fundamentum
+# Copia Remediorum
 
-Socle d'application familiale auto-hébergée (comptes, journal de preuve, sauvegardes, Docker), avec un module
-d'exemple « notes » à remplacer.
+La réserve des médicaments de la famille : savoir quand faire renouveler une ordonnance. Socle : modèle Fundamentum
+(comptes, journal de preuve, sauvegardes, Docker).
 
 ## À lire avant de travailler
 
@@ -38,4 +38,4 @@ bun scripts/renommer.ts "Nom" compte/depot "Description"   # une fois, dans une 
 
 ## État
 
-Modèle du socle (v0.1.0). Dans une nouvelle application : remplacer cette ligne par l'étape en cours du plan de la V1.
+Cadrage en cours (`docs/conception.md`). Le module d'exemple « notes » du modèle est encore en place : il sera remplacé à l'étape 2.
