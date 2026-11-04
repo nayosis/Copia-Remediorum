@@ -19,6 +19,7 @@ export const LIBELLES_FONCTIONS: Record<string, string> = {
   majTraitement: "Traitement modifié",
   supprimerTraitement: "Traitement supprimé",
   creerStock: "Nouveau stock",
+  majStock: "Stock modifié",
   archiverStock: "Stock archivé / désarchivé",
   pointer: "Pointage",
   majPointage: "Pointage corrigé",

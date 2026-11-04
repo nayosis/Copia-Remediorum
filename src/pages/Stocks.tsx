@@ -19,21 +19,37 @@ type Stock = Awaited<ReturnType<typeof listeStocks>>[number];
 export const libelleStock = (s: { medicament: string; prenom: string | null }) => `${s.medicament} — ${s.prenom ?? "partagé"}`;
 export const estimeLisible = (s: Stock) => (s.etat.estime === null ? "—" : quantiteAvecUnite(s.etat.estime, s.unite));
 
+/** « Boîtes de » : "partage" (stock partagé) ou l'identifiant d'une personne (stock propre). */
+export function ChampBoitesDe({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
+  const { data: personnes } = useQuery({ queryKey: ["personnes", false], queryFn: () => listePersonnes() });
+  return (
+    <Select
+      label="Boîtes de"
+      required
+      placeholder="Partagé ou propre à une personne ?"
+      description="Partagé : l'armoire commune. Propre : les boîtes d'une seule personne, que ses traitements utilisent en priorité."
+      data={[{ value: "partage", label: "Tout le monde (partagé)" }, ...(personnes ?? []).map((p) => ({ value: p.id, label: `${p.prenom} seulement` }))]}
+      value={value}
+      onChange={onChange}
+    />
+  );
+}
+
 /** Nouveau stock : partagé ou propre à une personne, avec un premier comptage facultatif. */
 function ModalStock({ ouvert, onClose }: { ouvert: boolean; onClose: () => void }) {
   const { data: meds } = useQuery({ queryKey: ["medicaments", false], queryFn: () => listeMedicaments() });
-  const { data: personnes } = useQuery({ queryKey: ["personnes", false], queryFn: () => listePersonnes() });
   const [medicamentId, setMedicamentId] = useState<string | null>(null);
-  const [pour, setPour] = useState<string>("partage");
+  const [pour, setPour] = useState<string | null>(null);
   const [quantite, setQuantite] = useState<number | null>(null);
   const [date, setDate] = useState<string | null>(aujourdhui());
   const enregistrer = async () => {
-    if (!medicamentId) return;
+    if (!medicamentId || !pour) return;
     const r = await ecrire(() =>
       creerStock({ medicamentId, personneId: pour === "partage" ? null : pour, pointage: quantite !== null && date ? { date, quantite } : null }),
     );
     if (r === undefined) return;
     setMedicamentId(null);
+    setPour(null);
     setQuantite(null);
     onClose();
   };
@@ -41,13 +57,7 @@ function ModalStock({ ouvert, onClose }: { ouvert: boolean; onClose: () => void 
     <Modal opened={ouvert} onClose={onClose} title="Nouveau stock">
       <Stack>
         <Select label="Médicament" required searchable data={(meds ?? []).map((m) => ({ value: m.id, label: m.nom }))} value={medicamentId} onChange={setMedicamentId} />
-        <Select
-          label="Boîtes de"
-          description="Partagé : l'armoire commune. Propre : les boîtes d'une seule personne, que ses traitements utilisent en priorité."
-          data={[{ value: "partage", label: "Tout le monde (partagé)" }, ...(personnes ?? []).map((p) => ({ value: p.id, label: `${p.prenom} seulement` }))]}
-          value={pour}
-          onChange={(v) => setPour(v ?? "partage")}
-        />
+        <ChampBoitesDe value={pour} onChange={setPour} />
         <Group grow align="flex-start">
           <ChampQuantite label="Premier comptage (facultatif)" valeur={quantite} onChange={setQuantite} pas={0.5} />
           <ChampDate label="Le soir du" value={date} onChange={setDate} />
@@ -56,7 +66,7 @@ function ModalStock({ ouvert, onClose }: { ouvert: boolean; onClose: () => void 
           <Button variant="default" onClick={onClose}>
             Annuler
           </Button>
-          <Button onClick={enregistrer} disabled={!medicamentId}>
+          <Button onClick={enregistrer} disabled={!medicamentId || !pour}>
             Créer
           </Button>
         </Group>

@@ -4,7 +4,8 @@ import { modals } from "@mantine/modals";
 import { IconArchive, IconArchiveOff, IconArrowLeft, IconDots, IconPencil, IconTrash } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { archiverStock, ficheStock, majPointage, supprimerPointage } from "../data/stocks";
+import { archiverStock, ficheStock, majPointage, majStock, supprimerPointage } from "../data/stocks";
+import { ChampBoitesDe } from "./Stocks";
 import { Historique } from "../components/Historique";
 import { BadgeStatut, echeanceLisible } from "../components/Statut";
 import { ChampDate, ChampQuantite } from "../components/Champs";
@@ -58,6 +59,35 @@ function ModalCorrection({ pointage, unite, onClose }: { pointage: LignePointage
   );
 }
 
+/** Modification d'un stock : partagé ou propre à une personne. */
+function ModalModification({ stock, onClose }: { stock: Fiche | null; onClose: () => void }) {
+  const [pour, setPour] = useState<string | null>(stock ? (stock.personneId ?? "partage") : null);
+  if (!stock) return null;
+  const enregistrer = async () => {
+    if (!pour) return;
+    const r = await ecrire(() => majStock(stock.id, { personneId: pour === "partage" ? null : pour }, stock.modifieLe));
+    if (r !== undefined) onClose();
+  };
+  return (
+    <Modal opened onClose={onClose} title={`Modifier le stock — ${stock.medicament}`}>
+      <Stack>
+        <ChampBoitesDe value={pour} onChange={setPour} />
+        <Text size="xs" c="dimmed">
+          Les traitements suivent : ceux d'une personne puisent dans son stock propre s'il existe, sinon dans le stock partagé.
+        </Text>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button onClick={enregistrer} disabled={!pour}>
+            Enregistrer
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+}
+
 /** Fiche d'un stock : où en est-on, qui y puise, et l'histoire de ses pointages (écarts avec le calcul). */
 export function FicheStock() {
   const { id } = ficheStockRoute.useParams();
@@ -65,6 +95,7 @@ export function FicheStock() {
   const pointerStock = useSaisieRapide();
   const { data: s, error } = useQuery({ queryKey: ["stock", id], queryFn: () => ficheStock(id) });
   const [correction, setCorrection] = useState<LignePointage | null>(null);
+  const [modification, setModification] = useState(false);
   if (error) return <Text p="xl">{error.message}</Text>;
   if (!s) return null;
   const jour = aujourdhui();
@@ -88,14 +119,19 @@ export function FicheStock() {
           </Group>
         </Anchor>
         {peutEcrire() && !telephone && (
-          <Button
-            size="xs"
-            variant="default"
-            leftSection={s.archive ? <IconArchiveOff size={14} /> : <IconArchive size={14} />}
-            onClick={() => ecrire(() => archiverStock(s.id, !s.archive))}
-          >
-            {s.archive ? "Désarchiver" : "Archiver"}
-          </Button>
+          <Group gap="xs">
+            <Button size="xs" variant="default" leftSection={<IconPencil size={14} />} onClick={() => setModification(true)}>
+              Modifier
+            </Button>
+            <Button
+              size="xs"
+              variant="default"
+              leftSection={s.archive ? <IconArchiveOff size={14} /> : <IconArchive size={14} />}
+              onClick={() => ecrire(() => archiverStock(s.id, !s.archive))}
+            >
+              {s.archive ? "Désarchiver" : "Archiver"}
+            </Button>
+          </Group>
         )}
       </Group>
       <Group justify="space-between" align="flex-start">
@@ -222,6 +258,7 @@ export function FicheStock() {
         </Text>
       </Card>
       {estAdmin() && !telephone && <Historique id={s.id} />}
+      {modification && <ModalModification stock={s} onClose={() => setModification(false)} />}
       <ModalCorrection key={correction?.id} pointage={correction} unite={s.unite} onClose={() => setCorrection(null)} />
     </Stack>
   );

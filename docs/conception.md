@@ -26,7 +26,10 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 - **Stock** (réserve) : **les deux cas sont prévus** (décidé). Un stock est soit **partagé** (l'armoire commune : les
   traitements des deux parents pour ce médicament y puisent), soit **propre à une personne** (ses boîtes à elle).
   **Un traitement puise dans le stock propre à sa personne s'il existe, sinon dans le stock partagé du médicament**
-  (décidé) ; on choisit partagé ou propre à la création du stock.
+  (décidé) ; on choisit partagé ou propre à la création du stock (sans choix par défaut : il faut le dire), et on
+  peut le changer ensuite en modifiant le stock (rôle écriture), tant qu'il n'existe pas déjà un stock actif pour ce
+  médicament et cette personne (ou un stock partagé actif). Les traitements suivent la règle : changer un stock
+  partagé en stock propre renvoie les traitements des autres personnes « sans stock » (signalés page Stocks).
 - **Quantités** : en unités du médicament (comprimés). Les posologies admettent ½ et ¼ : quantités stockées en
   **entiers de quarts d'unité** (comme les centimes de Cura), jamais de flottants. Un pointage peut compter des
   demi-comprimés (« 12,5 ») (décidé).
