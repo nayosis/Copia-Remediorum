@@ -1,6 +1,6 @@
 # Journal des versions
 
-## À venir
+## v0.2.0 · Modifier un stock
 
 **Nouveau**
 - **Modifier un stock** (fiche du stock, bouton « Modifier ») : le passer de partagé à propre à une personne, ou
