@@ -1,5 +1,14 @@
 # Journal des versions
 
+## À venir
+
+**Nouveau**
+- **Modifier un stock** (fiche du stock, bouton « Modifier ») : le passer de partagé à propre à une personne, ou
+  l'inverse ; les traitements suivent.
+
+**Changé**
+- Nouveau stock : le champ « Boîtes de » n'est plus prérempli (« partagé ») ; il faut le choisir.
+
 ## v0.1.0 · Première version
 
 Suivi du stock de médicaments de la famille : posologies, pointages, date d'épuisement, page « À renouveler » et

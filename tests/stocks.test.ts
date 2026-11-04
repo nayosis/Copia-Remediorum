@@ -53,6 +53,30 @@ describe("stocks", () => {
     expect((await stocksDe(med))[0].traitements.length).toBe(2);
   });
 
+  test("modifier un stock : partagé ↔ propre, les traitements suivent ; doublon refusé", async () => {
+    const med = await ok("creerMedicament", { nom: "Tahor" });
+    await ok("creerTraitement", { personneId: jeanne, medicamentId: med, posologie: unParJour, debut: ilYA(30) });
+    await ok("creerTraitement", { personneId: robert, medicamentId: med, posologie: unParJour, debut: ilYA(30) });
+    const [partage] = await stocksDe(med);
+    // Partagé → propre à Jeanne : Robert n'a plus de stock.
+    await ok("majStock", partage.id, { personneId: jeanne });
+    let [st] = await stocksDe(med);
+    expect(st.personneId).toBe(jeanne);
+    expect(st.traitements.map((t) => t.prenom)).toEqual(["Jeanne"]);
+    expect((await ok("traitementsSansStock")).some((t: { medicamentId: string; prenom: string }) => t.medicamentId === med && t.prenom === "Robert")).toBe(true);
+    // Un stock propre à Robert existe : impossible de faire du stock de Jeanne celui de Robert.
+    const deRobert = await ok("creerStock", { medicamentId: med, personneId: robert });
+    expect((await appel("majStock", [partage.id, { personneId: robert }])).erreur).toBe("Cette personne a déjà son stock de ce médicament.");
+    // Retour au partagé (par le rôle écriture) : Jeanne y puise, Robert garde son stock propre.
+    expect((await appel("majStock", [partage.id, { personneId: null }], ecrivain.cookie)).statut).toBe(200);
+    [st] = (await stocksDe(med)).filter((x) => x.id === partage.id);
+    expect(st.personneId).toBeNull();
+    expect(st.traitements.map((t) => t.prenom)).toEqual(["Jeanne"]);
+    expect((await stocksDe(med)).find((x) => x.id === deRobert)!.traitements.map((t) => t.prenom)).toEqual(["Robert"]);
+    // Un second stock partagé est refusé.
+    expect((await appel("majStock", [deRobert, { personneId: null }])).erreur).toBe("Ce médicament a déjà un stock partagé.");
+  });
+
   test("pointage : recale le stock estimé et la date d'épuisement ; le plus récent l'emporte", async () => {
     const med = await ok("creerMedicament", { nom: "Levothyrox" });
     await ok("creerTraitement", { personneId: jeanne, medicamentId: med, posologie: unParJour, debut: ilYA(60) });

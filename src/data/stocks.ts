@@ -179,6 +179,23 @@ export async function creerStock(v: { medicamentId: string; personneId?: string 
   return id;
 }
 
+/**
+ * Modifie un stock : partagé (`personneId` null) ou propre à une personne. Les traitements suivent la règle
+ * (propre d'abord, sinon partagé). Refusé s'il existe déjà un stock actif de même nature.
+ */
+export async function majStock(id: string, patch: { personneId?: string | null }, version?: string | null) {
+  const [l] = await query("select medicament_id, archive from stock where id = ?", [id]);
+  if (!l) throw new ErreurMetier("Stock introuvable.", 404);
+  await verifierVersion("stock", id, version);
+  if (patch.personneId !== undefined) {
+    const personneId = patch.personneId || null;
+    if (personneId) await exiger("personne", personneId, "Personne inconnue.");
+    if (!l[1]) await verifierUnique(l[0] as string, personneId, id);
+    await query("update stock set personne_id = ? where id = ?", [personneId, id]);
+  }
+  return versionDe("stock", id);
+}
+
 /** Archive un stock (plus de boîtes à part, par exemple) : ses traitements puisent alors dans le stock partagé. */
 export async function archiverStock(id: string, archive: boolean) {
   const [l] = await query("select medicament_id, personne_id from stock where id = ?", [id]);
