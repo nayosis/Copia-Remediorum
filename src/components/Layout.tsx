@@ -3,7 +3,7 @@ import {
   Alert, AppShell, Badge, Box, Burger, Button, Divider, Drawer, Group, Menu, Modal, NavLink, PasswordInput, Stack, Text, UnstyledButton, SegmentedControl, useMantineColorScheme,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconBrandGithub, IconChevronUp, IconDatabaseExport, IconDots, IconHistory, IconKey, IconLayoutDashboard, IconLogout, IconAdjustmentsHorizontal, IconBell, IconBoxSeam, IconClipboardList, IconPill, IconPlus, IconUserCog } from "@tabler/icons-react";
+import { IconBrandGithub, IconChevronUp, IconDatabaseExport, IconDots, IconHistory, IconKey, IconLayoutDashboard, IconLogout, IconAdjustmentsHorizontal, IconBell, IconBoxSeam, IconCalendarEvent, IconClipboardList, IconPill, IconPlus, IconUserCog } from "@tabler/icons-react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { appelApi } from "../lib/rpc";
 import { deconnexion, estAdmin, LIBELLES_ROLES, peutEcrire, utilisateur } from "../lib/session";
@@ -23,6 +23,7 @@ type Entree = { to: string; label: string; court?: string; barre?: boolean; icon
 const ENTREES: Entree[] = [
   { to: "/", label: "À renouveler", court: "Renouveler", barre: true, icone: IconClipboardList, actif: (p) => p === "/" },
   { to: "/stocks", label: "Stocks", barre: true, icone: IconBoxSeam, actif: (p) => p.startsWith("/stocks") },
+  { to: "/stock-a-date", label: "Stock à date", icone: IconCalendarEvent, actif: (p) => p.startsWith("/stock-a-date") },
   { to: "/traitements", label: "Traitements", barre: true, icone: IconPill, actif: (p) => p.startsWith("/traitements") },
   { to: "/parametres", label: "Paramètres", icone: IconAdjustmentsHorizontal, actif: (p) => p.startsWith("/parametres") },
 ];

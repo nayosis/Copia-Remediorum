@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { calculerStock, dateEpuisement, delaiDuStock, estimerAu, recaler, type TraitementDuStock } from "../src/lib/stock";
+import { besoinJusquau, calculerStock, dateEpuisement, delaiDuStock, estimerAu, recaler, type TraitementDuStock } from "../src/lib/stock";
 import type { Posologie } from "../src/lib/posologie";
 
 const quotidien = (q: number, debut = "2026-01-01", fin: string | null = null, delaiAlerte: number | null = null): TraitementDuStock => ({
@@ -113,5 +113,14 @@ describe("réapprovisionnement", () => {
     expect(e.depart).toEqual({ date: "2026-11-05", quantite: 36 * C });
     expect(e.estime).toBe(31 * C);
     expect(e.epuisement).toBe("2026-12-12");
+  });
+});
+
+describe("stock à date", () => {
+  test("besoin : prises du lendemain jusqu'au soir choisi inclus ; dates de début et de fin comprises", () => {
+    expect(besoinJusquau([quotidien(C)], "2026-11-05", "2026-11-05")).toBe(0);
+    expect(besoinJusquau([quotidien(C)], "2026-11-05", "2026-12-15")).toBe(40 * C);
+    expect(besoinJusquau([quotidien(C), quotidien(2)], "2026-11-05", "2026-11-15")).toBe(10 * (C + 2));
+    expect(besoinJusquau([quotidien(C, "2026-11-10", "2026-11-12")], "2026-11-05", "2026-12-15")).toBe(3 * C);
   });
 });

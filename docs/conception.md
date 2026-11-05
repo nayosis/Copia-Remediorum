@@ -156,8 +156,8 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 
 ## Plan de la 0.3
 
-1. Réapprovisionnement : table `ajout` (migration), calcul du stock (ajouts après le dernier pointage, ordre de saisie
+1. Réapprovisionnement (fait) : table `ajout` (migration), calcul du stock (ajouts après le dernier pointage, ordre de saisie
    le même jour), écart des pointages, fonctions `ajouter` / `majAjout` / `supprimerAjout`, fenêtre sur la fiche et
    dans le « + » du téléphone. Tests du calcul (fonctions pures) et des droits.
-2. Carte « Ce soir » sur l'accueil.
-3. Page « Stock à date » (calcul du besoin jusqu'à une date : fonction pure testée), imprimable.
+2. Carte « Ce soir » sur l'accueil (fait).
+3. Page « Stock à date » (fait ; calcul du besoin jusqu'à une date : fonction pure testée), imprimable.

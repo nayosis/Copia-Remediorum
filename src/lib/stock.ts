@@ -73,6 +73,16 @@ export function recaler(pointage: Pointage | null, ajouts: Ajout[], traitements:
   return depart;
 }
 
+/**
+ * Prises prévues du lendemain de `soir` jusqu'au soir de `jusquau` inclus (page « Stock à date ») : ce qu'il faut
+ * avoir ce soir pour tenir jusque-là. Les dates de début et de fin des traitements sont prises en compte.
+ */
+export function besoinJusquau(traitements: TraitementDuStock[], soir: string, jusquau: string) {
+  let besoin = 0;
+  for (let d = ajouterJours(soir, 1); d <= jusquau; d = ajouterJours(d, 1)) besoin += prisesDuJour(traitements, d);
+  return besoin;
+}
+
 /** Premier jour, après le pointage, où le stock restant ne couvre plus les prises du jour (null : jamais). */
 export function dateEpuisement(pointage: Pointage, traitements: TraitementDuStock[]) {
   const consommant = traitements.filter((t) => t.posologie);

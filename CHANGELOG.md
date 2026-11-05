@@ -7,6 +7,10 @@
   nouvelles boîtes sans recompter ; le calcul part du restant prévu ce jour-là, plus l'ajout. La fenêtre montre le
   détail (dernier comptage, prises prévues depuis, ajout, total).
 - Fiche du stock : les réapprovisionnements apparaissent avec les pointages ; l'écart d'un pointage en tient compte.
+- **Ce soir, dans l'armoire** (accueil, sous « À renouveler ») : tous les stocks, ce qu'il en reste ce soir après les
+  prises du jour, et jusqu'à quand ils tiennent.
+- **Stock à date** (menu) : on choisit une date, la page dit ce qu'il manque dans chaque stock pour tenir jusque-là,
+  pour faire renouveler juste ce qu'il faut. Imprimable.
 
 **Changé**
 - Fiche du stock : un seul bouton « Modifier », qui ouvre la fiche du médicament (nom, unité, seuil, note) avec le

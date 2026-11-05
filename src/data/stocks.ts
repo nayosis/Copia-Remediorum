@@ -7,7 +7,7 @@ import { ErreurMetier } from "../../serveur/erreurs";
 import { adminCourant } from "../../serveur/tracabilite";
 import { ajouterJours, aujourdhui } from "../lib/dates";
 import type { Posologie } from "../lib/posologie";
-import { calculerStock, estimerAu, ordreUrgence, recaler, type Ajout, type EtatStock, type TraitementDuStock } from "../lib/stock";
+import { besoinJusquau, calculerStock, estimerAu, ordreUrgence, recaler, type Ajout, type EtatStock, type TraitementDuStock } from "../lib/stock";
 import { DATE, delaiAlerteGeneral, exiger } from "./_commun";
 import { verifierVersion, versionDe } from "./_version";
 
@@ -360,6 +360,46 @@ export async function supprimerAjout(id: string) {
   await exiger("ajout", id, "Ajout introuvable.");
   if (!adminCourant()) throw new ErreurMetier("Seul un admin peut supprimer un ajout.", 403);
   await query("delete from ajout where id = ?", [id]);
+}
+
+/**
+ * Page « Stock à date » : pour tenir jusqu'au soir de `jusquau`, ce qu'il manque dans chaque stock actif (besoin =
+ * prises prévues du lendemain jusqu'à cette date incluse, moins le stock estimé ce soir ; pas de marge). Les stocks
+ * qui manquent d'abord (du plus grand manque au plus petit), puis ceux qui sont couverts, puis ceux sans calcul.
+ */
+export async function stockADate(v: { jusquau: string }) {
+  const jour = aujourdhui();
+  if (!DATE.test(v.jusquau)) throw new ErreurMetier("Date invalide.");
+  if (v.jusquau < jour) throw new ErreurMetier("Choisissez aujourd'hui ou une date à venir.");
+  if (v.jusquau > ajouterJours(jour, 3 * 366)) throw new ErreurMetier("Date trop lointaine (3 ans au plus).");
+  const lignes = (await listeStocks({ jour }))
+    .map((s) => {
+      // Traitements qui consomment entre demain et la date choisie.
+      const periode = s.traitements.filter((t) => t.debut <= v.jusquau && (!t.fin || t.fin > jour));
+      const sansPosologie = !periode.some((t) => t.posologie);
+      const besoin = sansPosologie ? null : besoinJusquau(periode, jour, v.jusquau);
+      const estime = s.etat.estime;
+      return {
+        stockId: s.id,
+        medicament: s.medicament,
+        unite: s.unite,
+        /** Boîtes de : null pour un stock partagé. */
+        prenom: s.prenom,
+        /** Qui y puise sur la période. */
+        pour: [...new Set(periode.map((t) => t.prenom))],
+        estime,
+        besoin,
+        /** Ce qu'il faut faire renouveler (null : pas de calcul, stock jamais pointé ou pris si besoin). */
+        manque: besoin === null || estime === null ? null : Math.max(0, besoin - estime),
+        /** Ce qui restera le soir choisi, s'il est couvert. */
+        reste: besoin === null || estime === null ? null : Math.max(0, estime - besoin),
+        statut: s.etat.statut,
+      };
+    })
+    .filter((l) => l.pour.length);
+  const rang = (l: (typeof lignes)[number]) => (l.manque === null ? 2 : l.manque > 0 ? 0 : 1);
+  lignes.sort((a, b) => rang(a) - rang(b) || (b.manque ?? 0) - (a.manque ?? 0) || a.medicament.localeCompare(b.medicament, "fr"));
+  return { jour, jusquau: v.jusquau, lignes };
 }
 
 export type LigneARenouveler = {
