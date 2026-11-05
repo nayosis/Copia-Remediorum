@@ -189,6 +189,40 @@ describe("stocks", () => {
   });
 });
 
+describe("stock à date", () => {
+  type Ligne = { stockId: string; manque: number | null; reste: number | null; besoin: number | null; pour: string[] };
+  test("il manque = besoin jusqu'à la date − ce soir ; couvert avec le reste ; si besoin et jamais pointé : pas de calcul", async () => {
+    const dans = (n: number) => ajouterJours(jour, n);
+    const manque = await ok("creerMedicament", { nom: "Eliquis" });
+    await ok("creerTraitement", { personneId: jeanne, medicamentId: manque, posologie: unParJour, debut: ilYA(30) });
+    await ok("creerTraitement", { personneId: robert, medicamentId: manque, posologie: unParJour, debut: ilYA(30) });
+    const [sm] = await stocksDe(manque);
+    await ok("pointer", { stockId: sm.id, date: jour, quantite: 23 * C });
+    const couvert = await ok("creerMedicament", { nom: "Amlor" });
+    await ok("creerTraitement", { personneId: robert, medicamentId: couvert, posologie: unParJour, debut: ilYA(30) });
+    const [sc] = await stocksDe(couvert);
+    await ok("pointer", { stockId: sc.id, date: jour, quantite: 55 * C });
+    const siBesoin = await ok("creerMedicament", { nom: "Spifen" });
+    await ok("creerTraitement", { personneId: jeanne, medicamentId: siBesoin, posologie: null, debut: ilYA(30) });
+    const [sb] = await stocksDe(siBesoin);
+    await ok("pointer", { stockId: sb.id, date: jour, quantite: 30 * C });
+
+    const { lignes } = await ok("stockADate", { jusquau: dans(40) });
+    const de = (id: string) => lignes.find((l: Ligne) => l.stockId === id) as Ligne;
+    expect(de(sm.id)).toMatchObject({ besoin: 80 * C, manque: 57 * C, reste: 0 });
+    expect(de(sm.id).pour.sort()).toEqual(["Jeanne", "Robert"]);
+    expect(de(sc.id)).toMatchObject({ besoin: 40 * C, manque: 0, reste: 15 * C });
+    expect(de(sb.id)).toMatchObject({ besoin: null, manque: null });
+    // Ceux qui manquent d'abord, puis les couverts, puis ceux sans calcul.
+    const ordre = lignes.map((l: Ligne) => l.stockId);
+    expect(ordre.indexOf(sm.id)).toBeLessThan(ordre.indexOf(sc.id));
+    expect(ordre.indexOf(sc.id)).toBeLessThan(ordre.indexOf(sb.id));
+
+    expect((await appel("stockADate", [{ jusquau: ilYA(1) }])).erreur).toBe("Choisissez aujourd'hui ou une date à venir.");
+    expect((await ok("stockADate", { jusquau: jour })).lignes.find((l: Ligne) => l.stockId === sm.id).besoin).toBe(0);
+  });
+});
+
 describe("à renouveler", () => {
   test("par personne : un stock partagé figure chez chacune ; jamais pointés à part ; prochaines échéances", async () => {
     const paul = await ok("creerPersonne", { prenom: "Paul" });

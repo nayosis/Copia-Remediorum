@@ -6,7 +6,7 @@
 import type { Database } from "bun:sqlite";
 
 /** Fonctions de src/data/ qui ne modifient rien. Toute autre fonction exposée est une écriture (sûr par défaut). */
-export const LECTURES = ["listePersonnes", "listeMedicaments", "lireParametres", "listeTraitements", "listeStocks", "ficheStock", "traitementsSansStock", "stocksAPointer", "aRenouveler", "apercuAjout"];
+export const LECTURES = ["listePersonnes", "listeMedicaments", "lireParametres", "listeTraitements", "listeStocks", "ficheStock", "traitementsSansStock", "stocksAPointer", "aRenouveler", "apercuAjout", "stockADate"];
 
 /** Tables métier suivies : colonnes cree_par / modifie_par / modifie_le remplies par déclencheurs, instantanés du journal. */
 export const TABLES_SUIVIES = ["personne", "medicament", "traitement", "stock", "pointage", "ajout"];

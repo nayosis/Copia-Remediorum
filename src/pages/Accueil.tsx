@@ -1,10 +1,10 @@
-import { Alert, Button, Card, Group, Stack, Table, Text, ThemeIcon, Title, UnstyledButton } from "@mantine/core";
+import { Alert, Badge, Button, Card, Group, Stack, Table, Text, ThemeIcon, Title, UnstyledButton } from "@mantine/core";
 import { IconAdjustmentsHorizontal, IconCircleCheck, IconPill, IconPrinter } from "@tabler/icons-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { aRenouveler } from "../data/stocks";
+import { aRenouveler, listeStocks } from "../data/stocks";
 import { AvisMiseAJour } from "../components/MiseAJour";
-import { BadgeStatut, echeanceLisible } from "../components/Statut";
+import { BadgeStatut, STATUTS, echeanceLisible } from "../components/Statut";
 import { dateLisible } from "../lib/dates";
 import { useEcran } from "../lib/ecran";
 import { posologieLisible } from "../lib/posologie";
@@ -86,6 +86,96 @@ function CartePersonne({ p, jour }: { p: Donnees["parPersonne"][number]; jour: s
   );
 }
 
+/**
+ * « Ce soir, dans l'armoire » : tous les stocks actifs, le stock estimé ce soir (après les prises du jour) et jusqu'à
+ * quand il tient. Pris si besoin : le dernier comptage (≈). Pas à l'impression (la liste imprimée va au médecin).
+ */
+function CarteCeSoir({ jour }: { jour: string }) {
+  const { telephone } = useEcran();
+  const naviguer = useNavigate();
+  const { data: stocks } = useQuery({ queryKey: ["stocks", false], queryFn: () => listeStocks() });
+  if (!stocks?.length) return null;
+  const ouvrir = (id: string) => naviguer({ to: "/stocks/$id", params: { id } });
+  const ligne = (s: (typeof stocks)[number]) => {
+    const enCours = s.traitements.filter((t) => !t.fin || t.fin >= jour);
+    const siBesoin = !enCours.some((t) => t.posologie);
+    const quantite = s.etat.estime === null ? "—" : `${siBesoin ? "≈ " : ""}${quantiteAvecUnite(s.etat.estime, s.unite)}`;
+    const tient =
+      s.etat.statut === "inconnu" ? (
+        <Text size="sm" c="dimmed">
+          À pointer
+        </Text>
+      ) : siBesoin || !s.etat.epuisement ? (
+        <Text size="sm" c="dimmed">
+          {siBesoin ? "Si besoin" : "—"}
+        </Text>
+      ) : (
+        <Badge color={STATUTS[s.etat.statut].couleur} variant="light">
+          {dateLisible(s.etat.epuisement, { day: "numeric", month: "short" })}
+        </Badge>
+      );
+    return { quantite, tient };
+  };
+  return (
+    <Card withBorder className="pas-a-l-impression">
+      <Group justify="space-between" align="baseline" mb="xs">
+        <Title order={4}>Ce soir, dans l'armoire</Title>
+        <Text size="xs" c="dimmed">
+          estimé après les prises du jour
+        </Text>
+      </Group>
+      {telephone ? (
+        <Stack gap={6}>
+          {stocks.map((s) => {
+            const l = ligne(s);
+            return (
+              <UnstyledButton key={s.id} onClick={() => ouvrir(s.id)}>
+                <Group justify="space-between" wrap="nowrap">
+                  <div style={{ minWidth: 0 }}>
+                    <Text size="sm" fw={600} truncate>
+                      {s.medicament}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {s.prenom ?? "Partagé"} · {l.quantite}
+                    </Text>
+                  </div>
+                  {l.tient}
+                </Group>
+              </UnstyledButton>
+            );
+          })}
+        </Stack>
+      ) : (
+        <Table highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Médicament</Table.Th>
+              <Table.Th>Boîtes de</Table.Th>
+              <Table.Th ta="right">Ce soir</Table.Th>
+              <Table.Th ta="right">Tient jusqu'au</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {stocks.map((s) => {
+              const l = ligne(s);
+              return (
+                <Table.Tr key={s.id} className="ligne-cliquable" onClick={() => ouvrir(s.id)}>
+                  <Table.Td fw={500}>{s.medicament}</Table.Td>
+                  <Table.Td>{s.prenom ?? "Partagé"}</Table.Td>
+                  <Table.Td ta="right" fw={600} style={{ whiteSpace: "nowrap" }}>
+                    {l.quantite}
+                  </Table.Td>
+                  <Table.Td ta="right">{l.tient}</Table.Td>
+                </Table.Tr>
+              );
+            })}
+          </Table.Tbody>
+        </Table>
+      )}
+    </Card>
+  );
+}
+
 /** Accueil : ce qu'il faut faire renouveler, par personne ; les stocks à pointer ; les prochaines échéances. */
 export function Accueil() {
   const { telephone } = useEcran();
@@ -146,6 +236,8 @@ export function Accueil() {
           {echeanceLisible(s.etat, d.jour)} — aucun traitement en cours n'y puise.
         </Alert>
       ))}
+
+      {d.nbPersonnes > 0 && <CarteCeSoir jour={d.jour} />}
 
       {d.aPointer.length > 0 && (
         <Card withBorder className="pas-a-l-impression">

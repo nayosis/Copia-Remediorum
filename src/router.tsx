@@ -7,6 +7,7 @@ import { Accueil } from "./pages/Accueil";
 import { Parametres } from "./pages/Parametres";
 import { Stocks } from "./pages/Stocks";
 import { FicheStock } from "./pages/FicheStock";
+import { StockADate } from "./pages/StockADate";
 import { Traitements } from "./pages/Traitements";
 import { Sauvegarde } from "./pages/Sauvegarde";
 import { Connexion } from "./pages/compte/Connexion";
@@ -57,6 +58,7 @@ export const accueilRoute = createRoute({ getParentRoute: () => application, pat
 // --- Pages de l'application
 export const stocksRoute = createRoute({ getParentRoute: () => application, path: "/stocks", component: Stocks });
 export const ficheStockRoute = createRoute({ getParentRoute: () => application, path: "/stocks/$id", component: FicheStock });
+export const stockADateRoute = createRoute({ getParentRoute: () => application, path: "/stock-a-date", component: StockADate });
 export const traitementsRoute = createRoute({ getParentRoute: () => application, path: "/traitements", component: Traitements });
 const parametres = createRoute({ getParentRoute: () => application, path: "/parametres", component: surOrdinateur(Parametres, "Paramètres") });
 
@@ -66,7 +68,7 @@ const comptes = createRoute({ getParentRoute: () => application, path: "/comptes
 const journal = createRoute({ getParentRoute: () => application, path: "/journal", component: surOrdinateur(Journal, "Journal"), beforeLoad: reserveAdmin });
 
 export const router = createRouter({
-  routeTree: racine.addChildren([connexionRoute, lienRoute, application.addChildren([accueilRoute, stocksRoute, ficheStockRoute, traitementsRoute, parametres, sauvegarde, comptes, journal])]),
+  routeTree: racine.addChildren([connexionRoute, lienRoute, application.addChildren([accueilRoute, stocksRoute, ficheStockRoute, stockADateRoute, traitementsRoute, parametres, sauvegarde, comptes, journal])]),
   history: createBrowserHistory(),
 });
 
