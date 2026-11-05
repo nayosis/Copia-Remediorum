@@ -38,6 +38,15 @@ describe("personnes et médicaments", () => {
     expect((await appel("majMedicament", [id, { seuilAlerte: -1 }])).statut).toBe(400);
   });
 
+  test("médicament renommé : le nouveau nom partout (stocks) ; un nom déjà pris est refusé", async () => {
+    const id = await ok("creerMedicament", { nom: "Tahor 10 mg" });
+    await ok("creerMedicament", { nom: "Tahor 20 mg" });
+    const stock = await ok("creerStock", { medicamentId: id });
+    await ok("majMedicament", id, { nom: "Tahor 10 mg (atorvastatine)" });
+    expect((await ok("listeStocks")).find((s: { id: string }) => s.id === stock).medicament).toBe("Tahor 10 mg (atorvastatine)");
+    expect((await appel("majMedicament", [id, { nom: "tahor 20 MG" }])).erreur).toBe("« tahor 20 MG » existe déjà.");
+  });
+
   test("délai d'alerte général : 7 jours par défaut, modifiable, borné", async () => {
     expect(await ok("lireParametres")).toEqual({ delaiAlerte: 7 });
     await ok("majParametres", { delaiAlerte: 10 });

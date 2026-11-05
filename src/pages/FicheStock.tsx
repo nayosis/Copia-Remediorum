@@ -4,8 +4,9 @@ import { modals } from "@mantine/modals";
 import { IconArchive, IconArchiveOff, IconArrowLeft, IconDots, IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { archiverStock, ficheStock, majAjout, majPointage, majStock, supprimerAjout, supprimerPointage } from "../data/stocks";
-import { ChampBoitesDe } from "./Stocks";
+import { archiverStock, ficheStock, majAjout, majPointage, supprimerAjout, supprimerPointage } from "../data/stocks";
+import { ModalMedicament } from "./Parametres";
+import { listeMedicaments } from "../data/referentiel";
 import { Historique } from "../components/Historique";
 import { BadgeStatut, echeanceLisible } from "../components/Statut";
 import { ChampDate, ChampQuantite } from "../components/Champs";
@@ -64,35 +65,6 @@ function ModalCorrection({ pointage, unite, onClose }: { pointage: LignePointage
   );
 }
 
-/** Modification d'un stock : partagé ou propre à une personne. */
-function ModalModification({ stock, onClose }: { stock: Fiche | null; onClose: () => void }) {
-  const [pour, setPour] = useState<string | null>(stock ? (stock.personneId ?? "partage") : null);
-  if (!stock) return null;
-  const enregistrer = async () => {
-    if (!pour) return;
-    const r = await ecrire(() => majStock(stock.id, { personneId: pour === "partage" ? null : pour }, stock.modifieLe));
-    if (r !== undefined) onClose();
-  };
-  return (
-    <Modal opened onClose={onClose} title={`Modifier le stock — ${stock.medicament}`}>
-      <Stack>
-        <ChampBoitesDe value={pour} onChange={setPour} />
-        <Text size="xs" c="dimmed">
-          Les traitements suivent : ceux d'une personne puisent dans son stock propre s'il existe, sinon dans le stock partagé.
-        </Text>
-        <Group justify="flex-end">
-          <Button variant="default" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button onClick={enregistrer} disabled={!pour}>
-            Enregistrer
-          </Button>
-        </Group>
-      </Stack>
-    </Modal>
-  );
-}
-
 /** Fiche d'un stock : où en est-on, qui y puise, et l'histoire de ses pointages (écarts avec le calcul) et ajouts. */
 export function FicheStock() {
   const { id } = ficheStockRoute.useParams();
@@ -100,7 +72,13 @@ export function FicheStock() {
   const pointerStock = useSaisieRapide();
   const { data: s, error } = useQuery({ queryKey: ["stock", id], queryFn: () => ficheStock(id) });
   const [correction, setCorrection] = useState<LignePointage | null>(null);
-  const [modification, setModification] = useState(false);
+  // Le médicament du stock (nom, unité, seuil, note), modifié ici avec le choix « Boîtes de » du stock.
+  const { data: medicaments } = useQuery({ queryKey: ["medicaments", true], queryFn: () => listeMedicaments({ archives: true }) });
+  const [editionMed, setEditionMed] = useState<Parameters<typeof ModalMedicament>[0]["edition"]>(null);
+  const medicament = medicaments?.find((m) => m.id === s?.medicamentId);
+  const modifierMedicament = () =>
+    medicament &&
+    setEditionMed({ id: medicament.id, version: medicament.modifieLe, nom: medicament.nom, unite: medicament.unite, seuilAlerte: medicament.seuilAlerte, note: medicament.note ?? "" });
   if (error) return <Text p="xl">{error.message}</Text>;
   if (!s) return null;
   const jour = aujourdhui();
@@ -129,7 +107,7 @@ export function FicheStock() {
         </Anchor>
         {peutEcrire() && !telephone && (
           <Group gap="xs">
-            <Button size="xs" variant="default" leftSection={<IconPencil size={14} />} onClick={() => setModification(true)}>
+            <Button size="xs" variant="default" leftSection={<IconPencil size={14} />} onClick={modifierMedicament} disabled={!medicament}>
               Modifier
             </Button>
             <Button
@@ -277,7 +255,7 @@ export function FicheStock() {
         </Text>
       </Card>
       {estAdmin() && !telephone && <Historique id={s.id} />}
-      {modification && <ModalModification stock={s} onClose={() => setModification(false)} />}
+      <ModalMedicament edition={editionMed} stock={s} onClose={() => setEditionMed(null)} />
       <ModalCorrection key={correction?.id} pointage={correction} unite={s.unite} onClose={() => setCorrection(null)} />
     </Stack>
   );

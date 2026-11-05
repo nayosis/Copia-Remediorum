@@ -98,7 +98,7 @@ export function Stocks() {
               Nouveau stock
             </Button>
           )}
-          {peutEcrire() && pointerStock && !telephone && <Button onClick={() => pointerStock()}>Pointer</Button>}
+          {peutEcrire() && pointerStock && !telephone && <Button onClick={() => pointerStock()}>Pointer / Réappro.</Button>}
         </Group>
       </Group>
       {!!sansStock?.length && (
@@ -164,7 +164,7 @@ export function Stocks() {
                         pointerStock(s.id);
                       }}
                     >
-                      Pointer
+                      Pointer / Réappro.
                     </Button>
                   )}
                 </Table.Td>

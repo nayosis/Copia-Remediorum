@@ -7,7 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   archiverMedicament, archiverPersonne, creerMedicament, creerPersonne, lireParametres, listeMedicaments, listePersonnes, majMedicament, majParametres, majPersonne,
 } from "../data/referentiel";
+import { majStock } from "../data/stocks";
 import { ChampQuantite } from "../components/Champs";
+import { ChampBoitesDe } from "./Stocks";
 import { quantiteAvecUnite } from "../lib/quantites";
 import { ecrire } from "../lib/query";
 import { peutEcrire } from "../lib/session";
@@ -72,27 +74,40 @@ function Personnes({ ecriture }: { ecriture: boolean }) {
 
 type EditionMed = { id?: string; version?: string | null; nom: string; unite: string; seuilAlerte: number | null; note: string };
 
-/** Création et modification d'un médicament. Exportée : la fenêtre des traitements en crée aussi. */
-export function ModalMedicament({ edition, onClose, onCree }: { edition: EditionMed | null; onClose: () => void; onCree?: (id: string) => void }) {
+/** Le stock depuis lequel on modifie le médicament (fiche du stock) : on y choisit aussi « Boîtes de ». */
+type StockEdite = { id: string; personneId: string | null; modifieLe: string | null };
+
+/**
+ * Création et modification d'un médicament. Exportée : la fenêtre des traitements en crée aussi, et la fiche d'un
+ * stock la modifie, avec en plus le choix partagé / propre de ce stock (`stock`).
+ */
+export function ModalMedicament({ edition, stock, onClose, onCree }: { edition: EditionMed | null; stock?: StockEdite; onClose: () => void; onCree?: (id: string) => void }) {
   return (
     <Modal opened={!!edition} onClose={onClose} title={edition?.id ? "Modifier le médicament" : "Nouveau médicament"}>
-      {edition && <FormMedicament key={edition.id ?? "nouveau"} initial={edition} onClose={onClose} onCree={onCree} />}
+      {edition && <FormMedicament key={edition.id ?? "nouveau"} initial={edition} stock={stock} onClose={onClose} onCree={onCree} />}
     </Modal>
   );
 }
 
-function FormMedicament({ initial, onClose, onCree }: { initial: EditionMed; onClose: () => void; onCree?: (id: string) => void }) {
+function FormMedicament({ initial, stock, onClose, onCree }: { initial: EditionMed; stock?: StockEdite; onClose: () => void; onCree?: (id: string) => void }) {
   const [v, setV] = useState(initial);
+  const pourInitial = stock ? (stock.personneId ?? "partage") : null;
+  const [pour, setPour] = useState<string | null>(pourInitial);
   const enregistrer = async () => {
     const saisie = { nom: v.nom, unite: v.unite, seuilAlerte: v.seuilAlerte, note: v.note };
     const r = await ecrire<unknown>(() => (v.id ? majMedicament(v.id, saisie, v.version) : creerMedicament(saisie)));
     if (r === undefined) return;
+    if (stock && pour && pour !== pourInitial) {
+      const r2 = await ecrire(() => majStock(stock.id, { personneId: pour === "partage" ? null : pour }, stock.modifieLe));
+      if (r2 === undefined) return;
+    }
     if (!v.id && typeof r === "string") onCree?.(r);
     onClose();
   };
   return (
     <Stack>
       <TextInput label="Nom" placeholder="Kardégic 75 mg" required value={v.nom} onChange={(e) => setV({ ...v, nom: e.currentTarget.value })} data-autofocus />
+      {stock && <ChampBoitesDe value={pour} onChange={setPour} />}
       <TextInput label="Unité" description="Ce que l'on compte : comprimé, gélule, sachet…" value={v.unite} onChange={(e) => setV({ ...v, unite: e.currentTarget.value })} />
       <ChampQuantite
         label="Seuil d'alerte (facultatif)"

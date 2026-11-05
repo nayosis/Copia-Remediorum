@@ -112,7 +112,7 @@ export function Accueil() {
                 Imprimer
               </Button>
             )}
-            {peutEcrire() && pointerStock && <Button onClick={() => pointerStock()}>Pointer</Button>}
+            {peutEcrire() && pointerStock && <Button onClick={() => pointerStock()}>Pointer / Réappro.</Button>}
           </Group>
         )}
       </Group>

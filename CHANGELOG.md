@@ -8,6 +8,11 @@
   détail (dernier comptage, prises prévues depuis, ajout, total).
 - Fiche du stock : les réapprovisionnements apparaissent avec les pointages ; l'écart d'un pointage en tient compte.
 
+**Changé**
+- Fiche du stock : un seul bouton « Modifier », qui ouvre la fiche du médicament (nom, unité, seuil, note) avec le
+  choix « Boîtes de » du stock.
+- Accueil et page Stocks : les boutons de saisie s'appellent « Pointer / Réappro. ».
+
 **Droits**
 - Le rôle écriture réapprovisionne ; seul un admin corrige ou supprime un réapprovisionnement.
 
