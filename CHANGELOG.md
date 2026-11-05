@@ -1,6 +1,6 @@
 # Journal des versions
 
-## À venir
+## v0.3.0 · Réapprovisionnement et stock à date
 
 **Nouveau**
 - **Réapprovisionner** un stock (fiche du stock, ou bouton « + » du téléphone › « Réapprovisionner ») : on ajoute les
