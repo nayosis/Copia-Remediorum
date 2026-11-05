@@ -136,6 +136,26 @@ export const pointage = sqliteTable(
   (t) => [index("pointage_stock_date_idx").on(t.stockId, t.date)],
 );
 
+/**
+ * Un réapprovisionnement : le `date`, on a ajouté `quantite` (quarts d'unité) sans recompter. Gardé tel quel (et non
+ * converti en pointage) : le calcul l'ajoute au restant prévu depuis le dernier pointage (docs/conception.md).
+ */
+export const ajout = sqliteTable(
+  "ajout",
+  {
+    id: id(),
+    stockId: text("stock_id")
+      .notNull()
+      .references(() => stock.id, { onDelete: "restrict" }),
+    date: text("date").notNull(),
+    quantite: integer("quantite").notNull(),
+    note: text("note"),
+    creeLe: creeLe(),
+    ...tracabilite(),
+  },
+  (t) => [index("ajout_stock_date_idx").on(t.stockId, t.date)],
+);
+
 export type Personne = typeof personne.$inferSelect;
 export type Medicament = typeof medicament.$inferSelect;
 export type Traitement = typeof traitement.$inferSelect;

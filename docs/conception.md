@@ -47,13 +47,30 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 ## Règles du stock
 
 - **Stock estimé** à une date = dernier pointage − consommation théorique de tous les traitements qui y puisent depuis
-  ce pointage. **On pointe le soir, après les prises du jour : la consommation reprend le lendemain** (décidé).
+  ce pointage + les ajouts saisis depuis (0.3). **On pointe le soir, après les prises du jour : la consommation reprend le lendemain** (décidé).
 - **Date d'épuisement** = premier jour où le stock estimé ne couvre plus les prises du jour.
 - **Alerte** : **7 jours** avant la date d'épuisement par défaut (paramètre général), **surchargeable par traitement**
   (médicament × personne). Un stock partagé alerte au plus grand délai de ses traitements.
 - **Seul le stock déclenche l'alerte** (décidé) : pas de suivi de l'ordonnance (validité, renouvellements) en V1.
-- **Un seul mouvement en V1 : le pointage** (décidé), en nombre d'unités. Nouvelles boîtes, boîte perdue, oubli de
-  prise : on recompte. Pas de date de péremption.
+- **Deux mouvements : le pointage et l'ajout** (0.3 ; en V1 il n'y avait que le pointage). Boîte perdue, oubli de
+  prise : on recompte (pointage). Pas de date de péremption.
+- **Ajout (réapprovisionnement)** (0.3) : « +60 sachets le 5 nov. », avec une note facultative (« Pharmacie »). On ne
+  recompte pas : le stock après l'ajout = **le restant prévu depuis le dernier pointage (comme si toutes les prises
+  avaient été faites) + l'ajout**. L'ajout est **conservé tel quel** (table `ajout` : stock, date, quantité, note), pas
+  converti en pointage : corriger un pointage plus ancien garde le calcul juste.
+  - Quantité **en unités du médicament** (0.3 : pas de saisie en boîtes pour le moment), par quart comme le pointage.
+  - **Pas de date dans le futur** ; un ajout daté d'avant le dernier pointage est accepté mais sans effet (déjà compté
+    par le pointage), avec un avertissement à la saisie.
+  - **Ordre le même jour : le dernier saisi l'emporte** (0.3) : un ajout saisi après le pointage du soir s'y ajoute ;
+    un pointage saisi après l'ajout le remplace (il compte ce qui est là).
+  - Calcul : **stock estimé = dernier pointage − consommation théorique + ajouts postérieurs à ce pointage** (ordre :
+    date, puis heure de saisie). Un pointage remet tout à plat. Restant prévu épuisé : on repart de zéro (jamais
+    négatif). **Stock jamais pointé : le premier ajout part de zéro** (0.3) : le stock devient connu.
+  - Droits : le **rôle écriture ajoute** ; un **admin corrige ou supprime** un ajout (journal avant / après).
+  - Saisie depuis la **fiche du stock** et depuis le bouton **« + » du téléphone** (choix « Pointer » /
+    « Réapprovisionner »). La fenêtre montre le détail : compté le …, prises prévues depuis, ajout, total ce soir-là.
+  - Fiche du stock : les ajouts figurent **dans la liste des pointages** (ligne « +60 » en vert) ; l'**écart** d'un
+    pointage tient compte des ajouts intermédiaires (prévu = pointage précédent − prises + ajouts).
 - Un pointage se corrige ou se supprime (admins) ; il reste au journal avec la fiche avant / après. Le rôle écriture
   pointe (un nouveau pointage remplace le précédent dans le calcul).
 - **Création des stocks** : le premier traitement d'un médicament crée son **stock partagé** (le cas courant) ; un
@@ -77,6 +94,18 @@ Personne ── Traitement (0..n) ──┬─ Médicament
   stock partagé figure chez chaque personne qui y puise, chacune ayant son ordonnance), avec la posologie, la date
   d'épuisement estimée et le stock estimé ce soir. Puis les stocks jamais pointés et les prochaines échéances.
 - Elle s'**imprime** (bouton « Imprimer » : la liste seule, sans menu). Pas de PDF ni d'export en V1.
+- **Carte « Ce soir, dans l'armoire »** (0.3), sur l'accueil **sous « À renouveler »** : **tous les stocks actifs**,
+  avec le stock estimé ce soir (après les prises du jour) et « tient jusqu'au » (date d'épuisement, pastille de
+  couleur du statut). Médicament sans posologie : le dernier comptage, précédé de « ≈ », et « si besoin ». Sur
+  téléphone : liste compacte, comme la page Stocks.
+- **Page « Stock à date »** (0.3), dans le menu à côté de Stocks, pour renouveler **juste ce qu'il faut** :
+  - on choisit **« Tenir jusqu'au soir du »** une date (non retenue en quittant la page) ;
+  - par stock actif : ce soir, **besoin** = prises prévues **du lendemain jusqu'au soir choisi inclus** (dates de fin
+    des traitements comprises), **il manque** = besoin − ce soir, ou « Couvert (+N) » ; **pas de marge** ;
+  - **en unités** (comprimés, sachets…) ; les boîtes (unités par boîte sur le médicament) viendront plus tard ;
+  - un stock partagé : **une seule ligne, avec les prénoms** de ceux qui y puisent ;
+  - médicament sans posologie : « si besoin », pas de calcul ;
+  - elle s'**imprime** comme « À renouveler ».
 
 ## Comptes
 
@@ -110,7 +139,7 @@ Personne ── Traitement (0..n) ──┬─ Médicament
 
 - Suivi des prises une par une (ce n'est pas le but).
 - Ordonnances (validité, renouvellements restants).
-- Entrée « +N boîtes » distincte du pointage, dates de péremption.
+- Dates de péremption. Quantités en boîtes (unités par boîte) : plus tard (0.3).
 - Consommation estimée par semaine pour les doses variables.
 
 ## Plan de la V1
@@ -124,3 +153,11 @@ Personne ── Traitement (0..n) ──┬─ Médicament
    consommation, historique).
 5. Notifications (fait) : module Web Push (abonnement par compte, tâche quotidienne du serveur, rappel hebdomadaire).
 6. Publication : version 1.0, image ghcr.io, déploiement personnel.
+
+## Plan de la 0.3
+
+1. Réapprovisionnement : table `ajout` (migration), calcul du stock (ajouts après le dernier pointage, ordre de saisie
+   le même jour), écart des pointages, fonctions `ajouter` / `majAjout` / `supprimerAjout`, fenêtre sur la fiche et
+   dans le « + » du téléphone. Tests du calcul (fonctions pures) et des droits.
+2. Carte « Ce soir » sur l'accueil.
+3. Page « Stock à date » (calcul du besoin jusqu'à une date : fonction pure testée), imprimable.

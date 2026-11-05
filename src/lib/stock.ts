@@ -5,6 +5,7 @@
  * Règles (docs/conception.md) :
  *  - on pointe le soir, après les prises du jour : la consommation reprend le lendemain du pointage ;
  *  - stock estimé (ce soir) = pointage − prises théoriques des jours suivants jusqu'à aujourd'hui inclus ;
+ *  - un ajout (réapprovisionnement) repart du restant prévu ce soir-là (jamais négatif) + la quantité ajoutée ;
  *  - date d'épuisement = premier jour où le stock restant ne couvre plus les prises du jour ;
  *  - alerte = date d'épuisement − délai (le plus grand des traitements en cours ; sinon le délai général),
  *    ou stock estimé sous le seuil du médicament.
@@ -14,6 +15,8 @@ import { priseDuJour, type Posologie } from "./posologie";
 
 export type TraitementDuStock = { posologie: Posologie | null; debut: string; fin: string | null; delaiAlerte: number | null };
 export type Pointage = { date: string; quantite: number };
+/** Un réapprovisionnement : le soir de `date`, `quantite` (quarts) s'ajoute au restant prévu. */
+export type Ajout = { date: string; quantite: number };
 
 export type Statut =
   /** Jamais pointé : stock inconnu. */
@@ -29,6 +32,8 @@ export type Statut =
 export type EtatStock = {
   statut: Statut;
   pointage: Pointage | null;
+  /** Point de départ du calcul : le dernier pointage, recalé par les ajouts qui le suivent. */
+  depart: Pointage | null;
   /** Stock estimé ce soir, en quarts (jamais négatif : 0 une fois épuisé). */
   estime: number | null;
   /** Premier jour non couvert ; null si jamais (consommation nulle, traitements finis). */
@@ -55,6 +60,19 @@ export function estimerAu(pointage: Pointage, traitements: TraitementDuStock[], 
   return stock;
 }
 
+/**
+ * Point de départ du calcul : le pointage, puis chaque ajout qui le suit (triés par date) le remplace par
+ * « restant prévu ce soir-là (jamais négatif) + ajout ». Sans pointage, le premier ajout part de zéro.
+ */
+export function recaler(pointage: Pointage | null, ajouts: Ajout[], traitements: TraitementDuStock[]): Pointage | null {
+  let depart = pointage;
+  for (const a of [...ajouts].sort((x, y) => x.date.localeCompare(y.date))) {
+    const restant = depart ? Math.max(0, estimerAu(depart, traitements, a.date)) : 0;
+    depart = { date: a.date, quantite: restant + a.quantite };
+  }
+  return depart;
+}
+
 /** Premier jour, après le pointage, où le stock restant ne couvre plus les prises du jour (null : jamais). */
 export function dateEpuisement(pointage: Pointage, traitements: TraitementDuStock[]) {
   const consommant = traitements.filter((t) => t.posologie);
@@ -79,6 +97,8 @@ export function delaiDuStock(traitements: TraitementDuStock[], aujourdhui: strin
 
 export function calculerStock(e: {
   pointage: Pointage | null;
+  /** Ajouts postérieurs au pointage (ou tous, s'il n'y en a pas). */
+  ajouts?: Ajout[];
   traitements: TraitementDuStock[];
   aujourdhui: string;
   delaiGeneral: number;
@@ -86,9 +106,10 @@ export function calculerStock(e: {
   seuil: number | null;
 }): EtatStock {
   const delai = delaiDuStock(e.traitements, e.aujourdhui, e.delaiGeneral);
-  if (!e.pointage) return { statut: "inconnu", pointage: null, estime: null, epuisement: null, alerteLe: null, delai, sousSeuil: false };
-  const estime = Math.max(0, estimerAu(e.pointage, e.traitements, e.aujourdhui));
-  const epuisement = dateEpuisement(e.pointage, e.traitements);
+  const depart = recaler(e.pointage, e.ajouts ?? [], e.traitements);
+  if (!depart) return { statut: "inconnu", pointage: null, depart: null, estime: null, epuisement: null, alerteLe: null, delai, sousSeuil: false };
+  const estime = Math.max(0, estimerAu(depart, e.traitements, e.aujourdhui));
+  const epuisement = dateEpuisement(depart, e.traitements);
   const alerteLe = epuisement ? ajouterJours(epuisement, -delai) : null;
   const sousSeuil = e.seuil !== null && estime < e.seuil;
   const consomme = e.traitements.some((t) => t.posologie && (!t.fin || t.fin >= e.aujourdhui));
@@ -100,7 +121,7 @@ export function calculerStock(e: {
         : !consomme && e.seuil === null
           ? "sans_suivi"
           : "ok";
-  return { statut, pointage: e.pointage, estime, epuisement, alerteLe, delai, sousSeuil };
+  return { statut, pointage: e.pointage, depart, estime, epuisement, alerteLe, delai, sousSeuil };
 }
 
 /** Ordre d'urgence pour les listes : épuisé, alerte, inconnu, ok, sans suivi ; puis date d'épuisement. */

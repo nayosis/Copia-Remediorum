@@ -6,12 +6,15 @@
 import type { Database } from "bun:sqlite";
 
 /** Fonctions de src/data/ qui ne modifient rien. Toute autre fonction exposée est une écriture (sûr par défaut). */
-export const LECTURES = ["listePersonnes", "listeMedicaments", "lireParametres", "listeTraitements", "listeStocks", "ficheStock", "traitementsSansStock", "stocksAPointer", "aRenouveler"];
+export const LECTURES = ["listePersonnes", "listeMedicaments", "lireParametres", "listeTraitements", "listeStocks", "ficheStock", "traitementsSansStock", "stocksAPointer", "aRenouveler", "apercuAjout"];
 
 /** Tables métier suivies : colonnes cree_par / modifie_par / modifie_le remplies par déclencheurs, instantanés du journal. */
-export const TABLES_SUIVIES = ["personne", "medicament", "traitement", "stock", "pointage"];
+export const TABLES_SUIVIES = ["personne", "medicament", "traitement", "stock", "pointage", "ajout"];
 
-/** Tables qu'une sauvegarde doit contenir pour être restaurée ici (vérifie qu'elle vient bien de cette application). */
+/**
+ * Tables qu'une sauvegarde doit contenir pour être restaurée ici (vérifie qu'elle vient bien de cette application).
+ * `ajout` (0.3) n'y est pas : une sauvegarde d'avant reste restaurable, ses migrations manquantes sont rejouées.
+ */
 export const TABLES_ATTENDUES = ["personne", "medicament", "traitement", "stock", "pointage", "journal", "__migrations"];
 
 /** Compteurs affichés à la sauvegarde et gardés dans son manifeste (libellé → requête qui renvoie un nombre). */
@@ -21,6 +24,7 @@ export const COMPTEURS: Record<string, string> = {
   Traitements: "select count(*) from traitement",
   Stocks: "select count(*) from stock",
   Pointages: "select count(*) from pointage",
+  Ajouts: "select count(*) from ajout",
 };
 
 /** Fichiers rattachés (data/fichiers/) : aucun en V1 (pas de pièce jointe) ; tout fichier envoyé est un orphelin. */
@@ -36,7 +40,7 @@ export function enrichir(base: Database, table: string, ligne: Record<string, un
     ligne.medicament = base.query<{ nom: string }, [string]>("SELECT nom FROM medicament WHERE id = ?").get(String(ligne.medicament_id))?.nom ?? null;
   }
   if (table === "stock") ligne.stock = libelleStock(base, String(ligne.id));
-  if (table === "pointage") ligne.stock = libelleStock(base, String(ligne.stock_id));
+  if (table === "pointage" || table === "ajout") ligne.stock = libelleStock(base, String(ligne.stock_id));
 }
 
 /** « Kardégic 75 mg — Jeanne » ou « Kardégic 75 mg — partagé ». */

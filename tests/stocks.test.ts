@@ -97,13 +97,62 @@ describe("stocks", () => {
     await ok("pointer", { stockId: st.id, date: ilYA(5), quantite: 20 * C });
     await ok("pointer", { stockId: st.id, date: jour, quantite: 13 * C, note: "une boîte retrouvée" });
     const f = await ok("ficheStock", st.id);
-    expect(f.pointages.map((p: { quantite: number; attendu: number | null }) => [p.quantite, p.attendu])).toEqual([
+    expect(f.mouvements.map((p: { quantite: number; attendu: number | null }) => [p.quantite, p.attendu])).toEqual([
       [13 * C, 15 * C],
       [20 * C, null],
     ]);
     const { lignes } = await (await s.requete(`/api/journal?cible=${st.id}`, { cookie })).json();
     expect(lignes.filter((l: { fonction: string }) => l.fonction === "pointer").length).toBe(2);
     expect(JSON.parse(lignes[0].apres).stock).toBe("Aspégic — partagé");
+  });
+
+  test("réapprovisionnement : restant prévu + ajout ; même jour, le dernier saisi l'emporte ; écart du pointage suivant", async () => {
+    const med = await ok("creerMedicament", { nom: "Crestor" });
+    await ok("creerTraitement", { personneId: jeanne, medicamentId: med, posologie: unParJour, debut: ilYA(60) });
+    const [st] = await stocksDe(med);
+    await ok("pointer", { stockId: st.id, date: ilYA(10), quantite: 20 * C });
+    // Le 4e jour : 20 − 4 = 16 prévus, + 30.
+    expect(await ok("apercuAjout", { stockId: st.id, date: ilYA(6), quantite: 30 * C })).toMatchObject({ prevu: 16 * C, apres: 46 * C, sansEffet: false });
+    await ok("ajouter", { stockId: st.id, date: ilYA(6), quantite: 30 * C, note: "Pharmacie" });
+    let [s1] = await stocksDe(med);
+    expect(s1.etat.estime).toBe(40 * C);
+    // Daté d'avant le dernier pointage : signalé sans effet.
+    expect((await ok("apercuAjout", { stockId: st.id, date: ilYA(12), quantite: 5 * C })).sansEffet).toBe(true);
+    // Pointage ce soir (compte ce qui est là), puis un ajout saisi après, le même jour : il s'y ajoute.
+    await ok("pointer", { stockId: st.id, date: jour, quantite: 38 * C });
+    await ok("ajouter", { stockId: st.id, date: jour, quantite: 10 * C });
+    [s1] = await stocksDe(med);
+    expect(s1.etat.estime).toBe(48 * C);
+    // Un pointage saisi ensuite, le même jour, le remplace.
+    await ok("pointer", { stockId: st.id, date: jour, quantite: 47 * C });
+    [s1] = await stocksDe(med);
+    expect(s1.etat.estime).toBe(47 * C);
+    // Fiche : du plus récent au plus ancien ; l'écart tient compte des ajouts entre deux pointages.
+    const f = await ok("ficheStock", st.id);
+    expect(f.mouvements.map((m: { type: string; quantite: number; attendu: number | null }) => [m.type, m.quantite / C, m.attendu === null ? null : m.attendu / C])).toEqual([
+      ["pointage", 47, 48],
+      ["ajout", 10, null],
+      ["pointage", 38, 40],
+      ["ajout", 30, null],
+      ["pointage", 20, null],
+    ]);
+  });
+
+  test("réapprovisionnement : droits, quantité nulle, date future, correction et suppression par un admin", async () => {
+    const med = await ok("creerMedicament", { nom: "Mopral" });
+    const st = await ok("creerStock", { medicamentId: med });
+    const a = (await appel("ajouter", [{ stockId: st, date: jour, quantite: 8 }], ecrivain.cookie)).resultat;
+    expect(typeof a).toBe("string");
+    expect((await appel("ajouter", [{ stockId: st, date: jour, quantite: 0 }])).erreur).toBe("Indiquez la quantité ajoutée.");
+    expect((await appel("ajouter", [{ stockId: st, date: ajouterJours(jour, 1), quantite: 4 }])).erreur).toBe("Un pointage ne peut pas être dans le futur.");
+    expect((await appel("majAjout", [a, { quantite: 12 }], ecrivain.cookie)).statut).toBe(403);
+    expect((await appel("supprimerAjout", [a], ecrivain.cookie)).statut).toBe(403);
+    await ok("majAjout", a, { quantite: 12 });
+    expect((await ok("listeStocks")).find((x: Stock) => x.id === st).etat.estime).toBe(12);
+    const { lignes } = await (await s.requete(`/api/journal?cible=${st}`, { cookie })).json();
+    expect(lignes.some((l: { fonction: string }) => l.fonction === "majAjout")).toBe(true);
+    await ok("supprimerAjout", a);
+    expect((await ok("listeStocks")).find((x: Stock) => x.id === st).etat.statut).toBe("inconnu");
   });
 
   test("sans posologie : seul le seuil du médicament alerte", async () => {
@@ -124,7 +173,7 @@ describe("stocks", () => {
     expect((await appel("majPointage", [p, { quantite: 12 }], ecrivain.cookie)).statut).toBe(403);
     expect((await appel("supprimerPointage", [p], ecrivain.cookie)).statut).toBe(403);
     expect((await appel("majPointage", [p, { quantite: 12 }])).statut).toBe(200);
-    expect((await ok("ficheStock", st)).pointages[0].quantite).toBe(12);
+    expect((await ok("ficheStock", st)).mouvements[0].quantite).toBe(12);
     expect((await appel("supprimerPointage", [p])).statut).toBe(200);
   });
 

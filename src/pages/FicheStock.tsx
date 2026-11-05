@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { ActionIcon, Anchor, Badge, Button, Card, Group, Menu, Modal, SimpleGrid, Stack, Table, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconArchive, IconArchiveOff, IconArrowLeft, IconDots, IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconArchive, IconArchiveOff, IconArrowLeft, IconDots, IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { archiverStock, ficheStock, majPointage, majStock, supprimerPointage } from "../data/stocks";
+import { archiverStock, ficheStock, majAjout, majPointage, majStock, supprimerAjout, supprimerPointage } from "../data/stocks";
 import { ChampBoitesDe } from "./Stocks";
 import { Historique } from "../components/Historique";
 import { BadgeStatut, echeanceLisible } from "../components/Statut";
@@ -19,7 +19,7 @@ import { estAdmin, peutEcrire } from "../lib/session";
 import { ficheStockRoute } from "../router";
 
 type Fiche = Awaited<ReturnType<typeof ficheStock>>;
-type LignePointage = Fiche["pointages"][number];
+type LignePointage = Fiche["mouvements"][number];
 
 function Chiffre({ label, valeur, detail }: { label: string; valeur: string; detail?: string }) {
   return (
@@ -39,19 +39,24 @@ function Chiffre({ label, valeur, detail }: { label: string; valeur: string; det
   );
 }
 
-/** Correction d'un pointage (admins). */
+/** Correction d'un pointage ou d'un ajout (admins). */
 function ModalCorrection({ pointage, unite, onClose }: { pointage: LignePointage | null; unite: string; onClose: () => void }) {
   const [quantite, setQuantite] = useState<number | null>(null);
   const [date, setDate] = useState<string | null>(null);
   if (!pointage) return null;
   const q = quantite ?? pointage.quantite;
   const d = date ?? pointage.date;
+  const ajout = pointage.type === "ajout";
   return (
-    <Modal opened onClose={onClose} title="Corriger le pointage">
+    <Modal opened onClose={onClose} title={ajout ? "Corriger le réapprovisionnement" : "Corriger le pointage"}>
       <Stack>
-        <ChampQuantite label={`Il restait (${unite})`} valeur={q} onChange={setQuantite} pas={0.5} />
-        <ChampDate label="Le soir du" required value={d} onChange={setDate} />
-        <Button onClick={async () => (await ecrire(() => majPointage(pointage.id, { quantite: q, date: d }, pointage.modifieLe))) !== undefined && onClose()}>
+        <ChampQuantite label={ajout ? `Ajout (${unite})` : `Il restait (${unite})`} valeur={q} onChange={setQuantite} pas={0.5} />
+        <ChampDate label={ajout ? "Le" : "Le soir du"} required value={d} onChange={setDate} />
+        <Button
+          onClick={async () =>
+            (await ecrire(() => (ajout ? majAjout : majPointage)(pointage.id, { quantite: q, date: d }, pointage.modifieLe))) !== undefined && onClose()
+          }
+        >
           Enregistrer
         </Button>
       </Stack>
@@ -88,7 +93,7 @@ function ModalModification({ stock, onClose }: { stock: Fiche | null; onClose: (
   );
 }
 
-/** Fiche d'un stock : où en est-on, qui y puise, et l'histoire de ses pointages (écarts avec le calcul). */
+/** Fiche d'un stock : où en est-on, qui y puise, et l'histoire de ses pointages (écarts avec le calcul) et ajouts. */
 export function FicheStock() {
   const { id } = ficheStockRoute.useParams();
   const { telephone } = useEcran();
@@ -103,11 +108,15 @@ export function FicheStock() {
 
   const supprimer = (p: LignePointage) =>
     modals.openConfirmModal({
-      title: "Supprimer ce pointage ?",
-      children: <Text size="sm">Le calcul repartira du pointage précédent. Le journal garde la trace de celui-ci.</Text>,
+      title: p.type === "ajout" ? "Supprimer ce réapprovisionnement ?" : "Supprimer ce pointage ?",
+      children: (
+        <Text size="sm">
+          {p.type === "ajout" ? "Le calcul ne comptera plus cet ajout." : "Le calcul repartira du pointage précédent."} Le journal en garde la trace.
+        </Text>
+      ),
       labels: { confirm: "Supprimer", cancel: "Annuler" },
       confirmProps: { color: "red" },
-      onConfirm: () => ecrire(() => supprimerPointage(p.id)),
+      onConfirm: () => ecrire(() => (p.type === "ajout" ? supprimerAjout : supprimerPointage)(p.id)),
     });
 
   return (
@@ -143,7 +152,14 @@ export function FicheStock() {
           </Group>
           <Text c="dimmed">{s.prenom ? `Boîtes de ${s.prenom}` : "Stock partagé (armoire commune)"}</Text>
         </div>
-        {peutEcrire() && pointerStock && !s.archive && <Button onClick={() => pointerStock(s.id)}>Pointer</Button>}
+        {peutEcrire() && pointerStock && !s.archive && (
+          <Group gap="xs">
+            <Button variant="default" leftSection={<IconPlus size={16} />} onClick={() => pointerStock(s.id, "ajout")}>
+              Réapprovisionner
+            </Button>
+            <Button onClick={() => pointerStock(s.id)}>Pointer</Button>
+          </Group>
+        )}
       </Group>
 
       <SimpleGrid cols={{ base: 1, sm: 3 }}>
@@ -191,9 +207,9 @@ export function FicheStock() {
 
       <Card withBorder>
         <Title order={4} mb="xs">
-          Pointages
+          Pointages et réapprovisionnements
         </Title>
-        {s.pointages.length === 0 ? (
+        {s.mouvements.length === 0 ? (
           <Text size="sm" c="dimmed">
             Aucun pointage : comptez ce qui reste, un soir après les prises.
           </Text>
@@ -210,15 +226,18 @@ export function FicheStock() {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {s.pointages.map((p) => {
+              {s.mouvements.map((p) => {
                 const ecart = p.attendu === null ? null : p.quantite - p.attendu;
+                const ajout = p.type === "ajout";
                 return (
                   <Table.Tr key={p.id}>
                     <Table.Td>{dateLisible(p.date)}</Table.Td>
-                    <Table.Td fw={500}>{quantiteLisible(p.quantite)}</Table.Td>
+                    <Table.Td fw={500} c={ajout ? "marque.7" : undefined}>
+                      {ajout ? `+${quantiteLisible(p.quantite)} ajoutés` : quantiteLisible(p.quantite)}
+                    </Table.Td>
                     {!telephone && <Table.Td c="dimmed">{p.attendu === null ? "—" : quantiteLisible(p.attendu)}</Table.Td>}
                     <Table.Td c={ecart === null || ecart === 0 ? "dimmed" : ecart < 0 ? "red.7" : "marque.7"}>
-                      {ecart === null ? "—" : ecart === 0 ? "=" : `${ecart > 0 ? "+" : ""}${quantiteLisible(ecart)}`}
+                      {ajout ? "" : ecart === null ? "—" : ecart === 0 ? "=" : `${ecart > 0 ? "+" : ""}${quantiteLisible(ecart)}`}
                     </Table.Td>
                     {!telephone && (
                       <Table.Td>
@@ -253,8 +272,8 @@ export function FicheStock() {
           </Table>
         )}
         <Text size="xs" c="dimmed" mt="xs">
-          Écart : ce qui a été compté moins ce que le calcul prévoyait d'après le pointage précédent (négatif : prise en trop, boîte perdue ; positif :
-          oubli de prise, nouvelles boîtes).
+          Écart : ce qui a été compté moins ce que le calcul prévoyait d'après le pointage précédent et les réapprovisionnements depuis (négatif : prise
+          en trop, boîte perdue ; positif : oubli de prise, boîtes non saisies).
         </Text>
       </Card>
       {estAdmin() && !telephone && <Historique id={s.id} />}
