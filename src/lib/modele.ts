@@ -24,6 +24,9 @@ export const LIBELLES_FONCTIONS: Record<string, string> = {
   pointer: "Pointage",
   majPointage: "Pointage corrigé",
   supprimerPointage: "Pointage supprimé",
+  ajouter: "Réapprovisionnement",
+  majAjout: "Réapprovisionnement corrigé",
+  supprimerAjout: "Réapprovisionnement supprimé",
 };
 
 /** Libellés des champs dans les écarts avant / après du journal. */

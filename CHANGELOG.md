@@ -1,5 +1,20 @@
 # Journal des versions
 
+## À venir
+
+**Nouveau**
+- **Réapprovisionner** un stock (fiche du stock, ou bouton « + » du téléphone › « Réapprovisionner ») : on ajoute les
+  nouvelles boîtes sans recompter ; le calcul part du restant prévu ce jour-là, plus l'ajout. La fenêtre montre le
+  détail (dernier comptage, prises prévues depuis, ajout, total).
+- Fiche du stock : les réapprovisionnements apparaissent avec les pointages ; l'écart d'un pointage en tient compte.
+
+**Droits**
+- Le rôle écriture réapprovisionne ; seul un admin corrige ou supprime un réapprovisionnement.
+
+**Mise à jour**
+- Nouvelle table `ajout`, créée automatiquement au démarrage. Les sauvegardes des versions précédentes restent
+  restaurables.
+
 ## v0.2.0 · Modifier un stock
 
 **Nouveau**

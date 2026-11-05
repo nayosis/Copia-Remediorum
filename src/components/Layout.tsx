@@ -201,7 +201,7 @@ function BarreBas({ chemin, onPlus }: { chemin: string; onPlus: () => void }) {
             )}
           </UnstyledButton>
           {i === milieu && peutEcrire() && nouvelle && (
-            <UnstyledButton onClick={() => nouvelle()} aria-label="Pointer un stock" style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+            <UnstyledButton onClick={() => nouvelle()} aria-label="Pointer ou réapprovisionner un stock" style={{ flex: 1, display: "flex", justifyContent: "center" }}>
               <Box
                 w={56}
                 h={56}

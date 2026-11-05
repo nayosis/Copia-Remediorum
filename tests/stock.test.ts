@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { calculerStock, dateEpuisement, delaiDuStock, estimerAu, type TraitementDuStock } from "../src/lib/stock";
+import { calculerStock, dateEpuisement, delaiDuStock, estimerAu, recaler, type TraitementDuStock } from "../src/lib/stock";
 import type { Posologie } from "../src/lib/posologie";
 
 const quotidien = (q: number, debut = "2026-01-01", fin: string | null = null, delaiAlerte: number | null = null): TraitementDuStock => ({
@@ -81,5 +81,37 @@ describe("délai et statut", () => {
     expect(calculerStock({ ...base, pointage: p, traitements: [siBesoin] }).statut).toBe("sans_suivi");
     expect(calculerStock({ ...base, pointage: p, traitements: [siBesoin], seuil: 10 * C })).toMatchObject({ statut: "alerte", sousSeuil: true });
     expect(calculerStock({ ...base, pointage: p, traitements: [siBesoin], seuil: 5 * C }).statut).toBe("ok");
+  });
+});
+
+describe("réapprovisionnement", () => {
+  const p = { date: "2026-11-01", quantite: 10 * C };
+  test("l'ajout repart du restant prévu ce soir-là + la quantité ajoutée", () => {
+    expect(recaler(p, [{ date: "2026-11-05", quantite: 30 * C }], [quotidien(C)])).toEqual({ date: "2026-11-05", quantite: 36 * C });
+    // Le même soir que le pointage : il s'y ajoute.
+    expect(recaler(p, [{ date: "2026-11-01", quantite: 5 * C }], [quotidien(C)])).toEqual({ date: "2026-11-01", quantite: 15 * C });
+  });
+
+  test("restant prévu épuisé : on repart de zéro, jamais d'un stock négatif", () => {
+    expect(recaler(p, [{ date: "2026-11-20", quantite: 30 * C }], [quotidien(C)])).toEqual({ date: "2026-11-20", quantite: 30 * C });
+  });
+
+  test("plusieurs ajouts s'enchaînent, dans l'ordre des dates ; sans pointage, le premier part de zéro", () => {
+    const ajouts = [
+      { date: "2026-11-08", quantite: 2 * C },
+      { date: "2026-11-03", quantite: 4 * C },
+    ];
+    // 10 − 2 + 4 = 12 le 3 ; 12 − 5 + 2 = 9 le 8.
+    expect(recaler(p, ajouts, [quotidien(C)])).toEqual({ date: "2026-11-08", quantite: 9 * C });
+    expect(recaler(null, [{ date: "2026-11-03", quantite: 4 * C }], [quotidien(C)])).toEqual({ date: "2026-11-03", quantite: 4 * C });
+    expect(recaler(null, [], [quotidien(C)])).toBeNull();
+  });
+
+  test("calcul du stock : estimation et épuisement partent de l'ajout ; le pointage affiché reste le comptage", () => {
+    const e = calculerStock({ pointage: p, ajouts: [{ date: "2026-11-05", quantite: 30 * C }], traitements: [quotidien(C)], aujourdhui: "2026-11-10", delaiGeneral: 7, seuil: null });
+    expect(e.pointage).toEqual(p);
+    expect(e.depart).toEqual({ date: "2026-11-05", quantite: 36 * C });
+    expect(e.estime).toBe(31 * C);
+    expect(e.epuisement).toBe("2026-12-12");
   });
 });
